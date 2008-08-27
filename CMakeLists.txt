@@ -39,4 +39,12 @@ add_executable(s3d_display
 	src/display.c
 	src/msgqueue.c)
 
-install(TARGETS s3d s3d_display DESTINATION bin)
+add_executable(s3d_compiler
+	src/compilermain.c
+	src/compiler.c
+	src/sha1.c)
+
+install(TARGETS s3d 
+		s3d_display
+		s3d_compiler 
+		DESTINATION bin)
