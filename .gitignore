@@ -1,0 +1,8 @@
+syntax: glob
+CMakeFiles/*
+Makefile
+cmake_install.cmake
+install_manifest.txt
+CMakeCache.txt
+s3d
+_lua_tmp.lua
