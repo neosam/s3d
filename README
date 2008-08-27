@@ -1,4 +1,16 @@
 s3d - Simple 3D
 ---------------
 
+Description:
 s3d is a 3d engine.
+
+Dependences:
+* SDL
+* OpenGL
+* cmake
+
+Compile and install:
+   cd s3d/
+   cmake .
+   make
+   make install
