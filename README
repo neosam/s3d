@@ -4,6 +4,18 @@ s3d - Simple 3D
 Description:
 s3d is a 3d engine.
 
+WARNING!
+This engine is not even a pre alpha version!  
+ - There is no standard yet. So, if you create your models, worlds, 
+   textures or whatever today, they won't probably work tomorrow.
+ - If you run this software on a server in the internet you will be
+   tasty cracker food!  I try to fix bugs if I see them but I work
+   alone at the moment.
+ - My English sucks.  I try to document everything but I can't
+   guarantee that you understand it ;)
+ - This software will crash or maybe not even compile.
+You've been warned, HF :)
+
 Dependences:
 * SDL
 * OpenGL
