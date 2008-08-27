@@ -19,10 +19,34 @@
  */
 
 #include <SDL.h>
+#include <sys/msg.h>
+#include "global.h"
+
+int createMessageQueue()
+{
+	int key = MESSAGE_KEY;
+	int exit = MESSAGE_KEY + 0x100;
+	int res;
+
+	do {
+		res = msgget(key, IPC_CREAT | IPC_EXCL | 0666);
+		if (res == exit) return -1;
+	} while (res == -1);
+	
+	return 0;
+}
+
+int init()
+{
+	if (createMessageQueue() != 0)
+		return 1;
+
+	return 0;
+}
 
 int main(int argc, char **argv)
 {
-	printf("s3d coming soon...\n");
+	init();
 
 	return 0;
 }
