@@ -5,4 +5,5 @@ cmake_install.cmake
 install_manifest.txt
 CMakeCache.txt
 s3d
+s3d_display
 _lua_tmp.lua

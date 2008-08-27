@@ -19,34 +19,84 @@
  */
 
 #include <SDL.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <sys/msg.h>
+#include <sys/signal.h>
 #include "global.h"
+#include "msgqueue.h"
 
-int createMessageQueue()
+pid_t displayID;
+
+void quit(int signal)
 {
-	int key = MESSAGE_KEY;
-	int exit = MESSAGE_KEY + 0x100;
-	int res;
-
-	do {
-		res = msgget(key, IPC_CREAT | IPC_EXCL | 0666);
-		if (res == exit) return -1;
-	} while (res == -1);
-	
-	return 0;
+	quitProcesses();
+	if (msgctl(msg, IPC_RMID, NULL) != 0)
+		printf("Could not destroy message queue\n");
+	exit(0);
 }
 
 int init()
 {
-	if (createMessageQueue() != 0)
+	signal(SIGINT, quit);
+
+	if (s3d_createMessageQueue() < 0)
 		return 1;
 
 	return 0;
 }
 
+int createDisplay()
+{
+	pid_t pid;
+	char key[32];
+
+	switch (pid = fork()) {
+	case -1: return 1;
+	case 0: 
+		sprintf(key, "%x\n", magic_key);
+		execlp("./s3d_display", "./n3d_display", key, NULL);
+		break;
+	default:
+		displayID = pid;
+		return 0;
+	}
+}
+
+int createProcesses()
+{
+	if (createDisplay() != 0)
+		return 1;
+}
+
+int quitProcesses()
+{
+	kill(displayID, SIGTERM);
+       
+	return 0;
+}
+
+int handleProcesses()
+{
+	pid_t pid;
+	int status;
+
+	while (1) {
+		printf("waiting\n");
+		pid = wait(&status);
+		printf("action\n");
+		if (pid == displayID)
+			quit(0);
+	}
+}
+
 int main(int argc, char **argv)
 {
-	init();
+	if (init() != 0)
+		return 1;
+	if (createProcesses() != 0)
+		return 2;
+	handleProcesses();
 
 	return 0;
 }

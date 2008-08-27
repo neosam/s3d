@@ -25,12 +25,18 @@ link_libraries(${SDL_LIBRARY}
 #	       -lalut)
 
 #ADD_DEFINITIONS(-DNDEBUG)
-ADD_DEFINITIONS(-ansi)
+#ADD_DEFINITIONS(-ansi)
+ADD_DEFINITIONS(-g)
 
 #configure_file(src/config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
 
 # Create n3dViewer executable
 add_executable(s3d
-	src/s3d.c)
+	src/s3d.c
+	src/msgqueue.c)
 
-install(TARGETS s3d DESTINATION bin)
+add_executable(s3d_display
+	src/display.c
+	src/msgqueue.c)
+
+install(TARGETS s3d s3d_display DESTINATION bin)
