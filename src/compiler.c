@@ -21,32 +21,44 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ossp/uuid.h>
 
 #include "compiler.h"
 #include "sha1.h"
 #include "misc.h"
 
+int insertID(char *stream, char *id)
+{
+	/* If there is no id, I will create a new one */
+	if (id == NULL) {
+		uuid_t *uuid;
+		uuid_create(&uuid);
+		uuid_make(uuid, UUID_MAKE_V1);
+		uuid_export(uuid, UUID_FMT_BIN, (void **)&id, NULL);
+		uuid_destroy(uuid);
+	}
+
+	memcpy(stream, id, 16);
+}
+
 
 /*
  * The Head of the stream object:
- * | author-length | author-name | date | parent |
- * | 8 bit number  |    string   | 32bit| 20byte |
+ * | uuid | date | parent | author-length | author-name |
+ * |16byte| 32bit| 20byte | 8 bit number  |    string   |
+ * | object id   |        |      author information     |
+ * |                     HEAD                           |
  */
-int writeHead(char *stream, char *author, char *parent)
+int writeHead(char *stream, char *author, char *parent, char *id)
 {
 	int aleni = strlen(author);
-	char *p = stream + 20; /* There is a sha1 before the head */
+	char *p = stream + 16; /* There is a uuid before the head */
 	unsigned int date = time(NULL);
 	
 	if (aleni > 256)
 		return -1;
 	
-	/* Set author length */
-	*(p++) = aleni;
-	
-	/* Set author */
-	strcpy(p, author);
-	p += aleni;
+	insertID(stream, id);
 
 	/* Set date TODO: ENDIAN */
 	memcpy(p, &date, 4);
@@ -54,9 +66,17 @@ int writeHead(char *stream, char *author, char *parent)
 
 	/* Set parent */
 	memcpy(p, parent, 20);
+	p += 20;
 
-	/* Length = author length + author + date + parent */
-	return 1 + aleni + 8 + 20;
+	/* Set author length */
+	*(p++) = aleni;
+	
+	/* Set author */
+	strcpy(p, author);
+	p += aleni;
+
+	/* Length = id + date + parent + autor-length + autor-name */
+	return 41 + aleni;
 }
 
 int insertSha1(char *stream, int size)
@@ -67,18 +87,27 @@ int insertSha1(char *stream, int size)
 	SHA1_Final(stream, &sha);
 }
 
+int writeData(char *stream, int headsize, char *code)
+{
+	char *p = stream + headsize + 20;
+
+	strcpy(p, "DATA");
+
+	return 4;
+}
+
 char *compile(char *code, char *author, char *parent)
 {
 	char *stream = MALLOCN(char, 4096);
 	int headsize, datasize;
 
-	if ((headsize = writeHead(stream, author, parent)) < 0)
+	if ((headsize = writeHead(stream, author, parent, NULL)) < 0)
 		return NULL;
 
-	/* Compile data is coming soon */
-	datasize = 0;
+	if ((datasize = writeData(stream, headsize, code)) < 0)
+		return NULL;
 
-	insertSha1(stream, headsize + datasize);
+	insertSha1(stream+headsize, datasize);
 
 	return stream;
 }
