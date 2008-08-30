@@ -20,9 +20,15 @@ Dependences:
 * SDL
 * OpenGL
 * cmake
+* ossp-uuid
 
 Compile and install:
    cd s3d/
    cmake .
    make
    make install
+
+Files and dirs:
+doc/todo  - what has to be done
+src       - sourcecode
+LICENSE   - GPLv3
