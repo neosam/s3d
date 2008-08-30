@@ -1,0 +1,7 @@
+[D = done, W = Work, N = Nothing]
+
+For 0.0.1a:
+
+W Compiler
+N Save in sqlite
+N Network binding
