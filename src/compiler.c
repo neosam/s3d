@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
@@ -96,9 +97,24 @@ int writeData(char *stream, int headsize, char *code)
 	return 4;
 }
 
+void parseID(char *code, char **id)
+{
+	uuid_t *uuid;
+	
+	uuid_create(&uuid);
+	uuid_import(uuid, UUID_FMT_STR, (void *)code, 36);
+	uuid_export(uuid, UUID_FMT_BIN, (void **)id, NULL);
+	uuid_destroy(uuid);
+}
+
 /* Reads the head (id) and return the code after ( */
 char *checkCodeHeader(char *code, char **id)
 {
+	if (*code==';')
+		parseID(++code, id);
+	else
+		*id = NULL;
+
 	for (;;) {
 		if (*code == '\0') return NULL;
 		if (*code == '(') return code;
@@ -115,7 +131,10 @@ char *compile(char *code, char *author, char *parent)
 	if ((code = checkCodeHeader(code, &id)) == NULL)
 		return NULL;
 
-	if ((headsize = writeHead(stream, author, parent, NULL)) < 0)
+	if (id == NULL)
+		fprintf(stderr, "No ID found\n");
+
+	if ((headsize = writeHead(stream, author, parent, id)) < 0)
 		return NULL;
 
 	if ((datasize = writeData(stream, headsize, code)) < 0)
