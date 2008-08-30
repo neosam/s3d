@@ -21,9 +21,12 @@
 #include <stdio.h>
 #include "compiler.h"
 
+char source[] = ";550e8400-e29b-11d4-a716-446655440000 "
+	"(tri (v0=\"(0, 1, 0)\" v1=\"(-1, -1, 0)\" v2=\"(1, -1, 0)\"))";
+
 int main(int argc, char **argv)
 {
-	char *code = compile(NULL, argv[1], argv[2]);
+	char *code = compile(source, argv[1], argv[2]);
 	if (code == NULL)
 		printf("ERROR");
 
