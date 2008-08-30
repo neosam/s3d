@@ -96,10 +96,24 @@ int writeData(char *stream, int headsize, char *code)
 	return 4;
 }
 
+/* Reads the head (id) and return the code after ( */
+char *checkCodeHeader(char *code, char **id)
+{
+	for (;;) {
+		if (*code == '\0') return NULL;
+		if (*code == '(') return code;
+		code++;
+	}
+}
+
 char *compile(char *code, char *author, char *parent)
 {
 	char *stream = MALLOCN(char, 4096);
 	int headsize, datasize;
+	char *id;
+
+	if ((code = checkCodeHeader(code, &id)) == NULL)
+		return NULL;
 
 	if ((headsize = writeHead(stream, author, parent, NULL)) < 0)
 		return NULL;
