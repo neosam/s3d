@@ -86,15 +86,54 @@ int insertSha1(char *stream, int size)
 	SHA1_Init(&sha);
 	SHA1_Update(&sha, stream+20, size);
 	SHA1_Final(stream, &sha);
+	return 0;
 }
 
-int writeData(char *stream, int headsize, char *code)
+char *scanTagname(char **tagname, char *pc)
 {
-	char *p = stream + headsize + 20;
+	int i;
+	char *t;
 
-	strcpy(p, "DATA");
+	if (*pc == ' ' || *pc == '\n')
+		return NULL;
+	*tagname = MALLOCN(char, 256);
+	t = *tagname;
 
-	return 4;
+	while (*pc != ' ' && *pc != '\n')
+		*t++ = *pc++;
+
+	return pc;
+} 
+
+char *skipSpaces(char *pc)
+{
+	while(*pc != ' ' && *pc != '\n');
+	return ++pc;
+}
+
+char *scanParameter(char ***parameter, char *pc)
+{
+	*parameter = MALLOCN(char *, 256);
+	return pc;
+}
+
+int writeData(char *stream, char *code)
+{
+	char *p = stream;
+	char *pc = code;
+	char *tagname;
+	char **parameter;
+
+	if ((pc = scanTagname(&tagname, pc)) == NULL)
+		return -1;
+	if ((pc = skipSpaces(pc)) == NULL)
+		return -2;
+	if ((pc = scanParameter(&parameter, ++pc)) == NULL)
+	    return -3;
+
+	free(tagname);
+	free(parameter);
+	return 0;
 }
 
 void parseID(char *code, char **id)
@@ -120,6 +159,8 @@ char *checkCodeHeader(char *code, char **id)
 		if (*code == '(') return code;
 		code++;
 	}
+
+	return code;
 }
 
 char *compile(char *code, char *author, char *parent)
@@ -137,7 +178,7 @@ char *compile(char *code, char *author, char *parent)
 	if ((headsize = writeHead(stream, author, parent, id)) < 0)
 		return NULL;
 
-	if ((datasize = writeData(stream, headsize, code)) < 0)
+	if ((datasize = writeData(stream + headsize + 20, ++code)) < 0)
 		return NULL;
 
 	insertSha1(stream+headsize, datasize);
