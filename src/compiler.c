@@ -33,10 +33,13 @@ int insertID(char *stream, char *id)
 	/* If there is no id, I will create a new one */
 	if (id == NULL) {
 		uuid_t *uuid;
+		char str[50];
 		uuid_create(&uuid);
 		uuid_make(uuid, UUID_MAKE_V1);
 		uuid_export(uuid, UUID_FMT_BIN, (void **)&id, NULL);
+		uuid_export(uuid, UUID_FMT_STR, (void **)&str, NULL);
 		uuid_destroy(uuid);
+		fprintf(stderr, "ID of new Tag: %s\n", str);
 	}
 
 	memcpy(stream, id, 16);
@@ -50,14 +53,10 @@ int insertID(char *stream, char *id)
  * | object id   |        |      author information     |
  * |                     HEAD                           |
  */
-int writeHead(char *stream, char *author, char *parent, char *id)
+int writeHead(char *stream, char *id)
 {
-	int aleni = strlen(author);
 	char *p = stream + 16; /* There is a uuid before the head */
 	unsigned int date = time(NULL);
-	
-	if (aleni > 256)
-		return -1;
 	
 	insertID(stream, id);
 
@@ -65,19 +64,8 @@ int writeHead(char *stream, char *author, char *parent, char *id)
 	memcpy(p, &date, 4);
 	p += 4;
 
-	/* Set parent */
-	memcpy(p, parent, 20);
-	p += 20;
-
-	/* Set author length */
-	*(p++) = aleni;
-	
-	/* Set author */
-	strcpy(p, author);
-	p += aleni;
-
-	/* Length = id + date + parent + autor-length + autor-name */
-	return 41 + aleni;
+	/* Length = id + date */
+	return 20;
 }
 
 int insertSha1(char *stream, int size)
@@ -240,6 +228,7 @@ int writeData(char *stream, char *code)
 	if ((size = writeTag(stream + 4, tagname, parameter)) < 0)
 		return -4;
 	
+	size += 4;
 	memcpy(stream, &size, 4);
 
 	free(tagname);
@@ -275,7 +264,13 @@ char *checkCodeHeader(char *code, char **id)
 	return code;
 }
 
-char *compile(char *code, char *author, char *parent)
+int getStreamsize(char *stream)
+{
+	int *b = (double*)stream;
+	return *(b+5) + 20;
+}
+
+char *compile(char *code)
 {
 	char *stream = MALLOCN(char, 4096);
 	int headsize, datasize;
@@ -287,13 +282,11 @@ char *compile(char *code, char *author, char *parent)
 	if (id == NULL)
 		fprintf(stderr, "No ID found\n");
 
-	if ((headsize = writeHead(stream, author, parent, id)) < 0)
+	if ((headsize = writeHead(stream, id)) < 0)
 		return NULL;
 
-	if ((datasize = writeData(stream + headsize + 20, code)) < 0)
+	if ((datasize = writeData(stream + headsize, code)) < 0)
 		return NULL;
-
-	insertSha1(stream+headsize, datasize);
 
 	return stream;
 }

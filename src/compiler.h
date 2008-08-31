@@ -21,6 +21,7 @@
 #ifndef COMPILER_H
 #define COMPILER_H
 
-char *compile(char *code, char *author, char *parent);
+char *compile(char *code);
+int getStreamsize(char *stream);
 
 #endif

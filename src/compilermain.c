@@ -26,17 +26,19 @@ int main(int argc, char **argv)
 {
 	char *stream;
 	char *code = MALLOCN(char, 4096);
-	FILE *input = fopen(argv[3], "r");
+	FILE *input = fopen(argv[1], "r");
 	
 	fread(code, 4096, 1, input);
 
-	stream = compile(code, argv[1], argv[2]);
+	stream = compile(code);
 	if (stream == NULL) {
 		fprintf(stderr, "ERROR");
 		return 1;
 	}
+
+	fprintf(stderr, "%i\n", getStreamsize(stream));
 	
-	fwrite(stream, 4096, 1, stdout);
+	fwrite(stream, getStreamsize(stream), 1, stdout);
 	fflush(stdout);
 
 	return 0;
