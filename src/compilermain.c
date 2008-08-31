@@ -20,9 +20,7 @@
 
 #include <stdio.h>
 #include "compiler.h"
-
-char source[] = ";550e8400-e29b-11d4-a716-446655440000 "
-	"(tri (v0=\"(0, 1, 0)\" v1=\"(-1, -1, 0)\" v2=\"(1, -1, 0)\"))";
+#include "misc.h"
 
 int main(int argc, char **argv)
 {
@@ -33,10 +31,12 @@ int main(int argc, char **argv)
 	fread(code, 4096, 1, input);
 
 	stream = compile(code, argv[1], argv[2]);
-	if (stream == NULL)
-		printf("ERROR");
-
-	fwrite(code, 4096, 1, stdout);
+	if (stream == NULL) {
+		fprintf(stderr, "ERROR");
+		return 1;
+	}
+	
+	fwrite(stream, 4096, 1, stdout);
 	fflush(stdout);
 
 	return 0;
