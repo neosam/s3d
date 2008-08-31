@@ -26,8 +26,14 @@ char source[] = ";550e8400-e29b-11d4-a716-446655440000 "
 
 int main(int argc, char **argv)
 {
-	char *code = compile(source, argv[1], argv[2]);
-	if (code == NULL)
+	char *stream;
+	char *code = MALLOCN(char, 4096);
+	FILE *input = fopen(argv[3], "r");
+	
+	fread(code, 4096, 1, input);
+
+	stream = compile(code, argv[1], argv[2]);
+	if (stream == NULL)
 		printf("ERROR");
 
 	fwrite(code, 4096, 1, stdout);
