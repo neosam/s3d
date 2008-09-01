@@ -23,10 +23,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ossp/uuid.h>
+#include <assert.h>
 
 #include "compiler.h"
 #include "sha1.h"
 #include "misc.h"
+
+void *compilererr;
 
 int insertID(char *stream, char *id)
 {
@@ -43,6 +46,7 @@ int insertID(char *stream, char *id)
 	}
 
 	memcpy(stream, id, 16);
+	return 0;
 }
 
 
@@ -80,8 +84,10 @@ int insertSha1(char *stream, int size)
 char *skipSpaces(char *pc)
 {
 	while(*pc == ' ' || *pc == '\n' || *pc == '\t')
-		if (*pc++ == '\0')
+		if (*pc++ == '\0') {
+			compilererr = "EOF or \\0 in file";
 			return NULL;
+		}
 	return pc;
 }
 
@@ -90,8 +96,10 @@ char *scanTagname(char **tagname, char *pc)
 	int i;
 	char *t;
 
-	if (*pc++ != '(')
+	if (*pc++ != '(') {
+		compilererr = "Expected (";
 		return NULL;
+	}
  
 	if ((pc =skipSpaces(pc)) == NULL)
 		return NULL;
@@ -120,8 +128,10 @@ char *scanParameter(char **param, char *pc)
 	*name = '\0';
        
 	/* Check for =" */
-	if (*++pc != '"')
+	if (*++pc != '"') {
+		compilererr = "Expected \"";
 		return NULL;
+	}
 	pc++;
 
         /* scan value */
@@ -140,8 +150,10 @@ char *scanParameterlist(char ***parameter, char *pc)
 
 	*param = NULL;
 
-	if (*pc++ != '(')
+	if (*pc++ != '(') {
+		compilererr = "Expected ( at parameter";
 		return NULL;
+	}
 
 	for (;;) {
 		if ((pc = skipSpaces(pc)) == NULL)
@@ -186,8 +198,10 @@ int writeTriToStream(char *stream, char *tagname, char **parameter)
 	float d0, d1, d2;
 	const type = 1;
 
-	if (v0 == NULL || v1 == NULL || v2 == NULL)
+	if (v0 == NULL || v1 == NULL || v2 == NULL) {
+		compilererr = "Not all parameter defined";
 		return -1;
+	}
 
 	d0 = strtod(v0, NULL);
 	d1 = strtod(v1, NULL);
@@ -205,6 +219,7 @@ int writeTag(char *stream, char *tagname, char **parameter)
 {
 	if (strcmp(tagname, "tri") == 0)
 		return writeTriToStream(stream, tagname, parameter);
+	compilererr = "Tagname not found";
 	return -1;
 }
 
@@ -216,14 +231,16 @@ int writeData(char *stream, char *code)
 	char **parameter;
 	int size;
 
-	if ((pc = scanTag(pc, &tagname, &parameter)) == NULL)
+	if ((pc = scanTag(pc, &tagname, &parameter)) == NULL) 
 		return -1;
 
 	if ((pc = skipSpaces(pc)) == NULL)
 		return -2;
 
-	if (*pc != ')')
+	if (*pc != ')') {
+		compilererr = "Expected ) at end of file";
 		return -3;
+	}
 
 	if ((size = writeTag(stream + 4, tagname, parameter)) < 0)
 		return -4;
@@ -237,27 +254,50 @@ int writeData(char *stream, char *code)
 	return size;
 }
 
-void parseID(char *code, char **id)
+int parseID(char *code, char **id)
 {
 	uuid_t *uuid;
+	char *str = NULL;
 	
 	uuid_create(&uuid);
-	uuid_import(uuid, UUID_FMT_STR, (void *)code, 36);
-	uuid_export(uuid, UUID_FMT_BIN, (void **)id, NULL);
+	if (uuid_import(uuid, UUID_FMT_STR, (void *)code, 36) != UUID_RC_OK) {
+		compilererr = "Could not read uuid";
+		return -1;
+	}
+	*id = NULL;
+	if (uuid_export(uuid, UUID_FMT_BIN, (void**) id, NULL) != UUID_RC_OK) {
+		compilererr = "Could not export uuid to bin";
+		return -1;
+	}
+	uuid_export(uuid, UUID_FMT_STR, (void**)&str, NULL);
+	fprintf(stderr, "%s\n", str);
 	uuid_destroy(uuid);
+
+	assert(*id != NULL);
+
+	return 0;
 }
 
 /* Reads the head (id) and return the code after ( */
 char *checkCodeHeader(char *code, char **id)
 {
-	if (*code==';')
-		parseID(++code, id);
+	if (*code==';') {
+		if (parseID(++code, id) != 0) {
+			if (compilererr == NULL)
+				compilererr = "Could not parse uuid";
+			return NULL;
+		}
+	}
 	else
 		*id = NULL;
 
 	for (;;) {
-		if (*code == '\0') return NULL;
-		if (*code == '(') return code;
+		if (*code == '\0') {
+			compilererr = "Unexpected EOF or NULL\n";
+			return NULL;
+		}
+		if (*code == '(') 
+			return code;
 		code++;
 	}
 

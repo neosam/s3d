@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
 	stream = compile(code);
 	if (stream == NULL) {
-		fprintf(stderr, "ERROR");
+		fprintf(stderr, "ERROR %s\n", compilererr);
 		return 1;
 	}
 
