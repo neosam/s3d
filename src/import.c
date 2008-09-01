@@ -18,9 +18,45 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
 #include "manager.h"
+#include "compiler.h"
+#include "misc.h"
+
+char *cutuuid(char *source)
+{
+	if (source[0] != ';')
+		return source;
+
+	while (*source++ != '\n');
+	return source;
+}
 
 int main(int argc, char **argv)
 {
+	char *code = MALLOCN(char, 4096);
+	char *stream;
+	FILE *input = fopen(argv[1], "r");
+
+	if (initManager() != 0) {
+		fprintf(stderr, "MANAGER ERROR: %s\n", managererr);
+		return 1;
+	}
+
+	fread(code, 4096, 1, input);
 	
+	stream = compile(code);
+	if (stream == NULL) {
+		fprintf(stderr, "COMPILER ERROR: %s\n", compilererr);
+		return 1;
+	}
+
+	code = cutuuid(code);
+
+	if (set(stream, code, 0) != 0) {
+		fprintf(stderr, "MANAGER ERROR: %s\n", managererr);
+		return 1;
+	}
+	
+	quitManager();
 }
