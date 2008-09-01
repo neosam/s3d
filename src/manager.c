@@ -29,6 +29,7 @@ char *managererr;
 char *stmt_set_2 = "INSERT INTO state (UUID, time, source, stream, UID) "
 "VALUES (:UUID, :time, :source, :stream, :UID);";
 char *stmt_set_3 = "INSERT INTO identifier (UUID, time) VALUES (:UUID, :time);";
+char *stmt_set_4 = "UPDATE identifier SET time = :time WHERE UUID = :UUID;";
 
 int initManager()
 {
@@ -76,12 +77,45 @@ int setNewUUID(char *stream, char *source, int uid, int time)
 	return 0;
 }
 
+int setUpdateUUID(char *stream, char *source, int uid, int time)
+{
+	const char *out;
+
+	printf("Update uuid\n");
+	sqlite3_stmt *stmt2;
+	sqlite3_prepare_v2(db, stmt_set_2, strlen(stmt_set_2), &stmt2, &out);
+	sqlite3_bind_blob(stmt2, 1, (void *)stream, 16, SQLITE_STATIC);
+	sqlite3_bind_int(stmt2, 2, time);
+	sqlite3_bind_text(stmt2, 3, source, -1, SQLITE_STATIC);
+	sqlite3_bind_blob(stmt2, 4, (void *)stream, 
+			  getStreamsize(stream), SQLITE_STATIC);
+	sqlite3_bind_int(stmt2, 5, uid);
+	if (sqlite3_step(stmt2) != SQLITE_DONE) {
+		managererr = "Could not create state";
+		return -1;
+	}
+	
+	sqlite3_stmt *stmt3;
+	sqlite3_prepare_v2(db, stmt_set_4, strlen(stmt_set_4), &stmt3, &out);
+	sqlite3_bind_blob(stmt3, 2, (void *)stream, 16, SQLITE_STATIC);
+	sqlite3_bind_int(stmt3, 1, time);
+	if (sqlite3_step(stmt3) != SQLITE_DONE) {
+		managererr = "Could not update identifier";
+		return -1;
+	}
+
+	printf("done\n");
+	return 0;
+}
+
 int set(char *stream, char *source, int uid)
 {
 	char *uuid = stream, *out;
 	int *istream = (int*)stream;
 	int time = istream[4];
 	sqlite3_stmt *stmt1;
+
+	printf("%i\n", time);
 	
 	sqlite3_prepare_v2(db, 
 			   "select UUID from IDENTIFIER WHERE UUID=:uuid;",
@@ -89,10 +123,11 @@ int set(char *stream, char *source, int uid)
 	sqlite3_bind_blob(stmt1, 1, (void *)stream, 16, SQLITE_STATIC);
 	switch (sqlite3_step(stmt1)) {
 	case SQLITE_DONE:
+		sqlite3_finalize(stmt1);
 		return setNewUUID(stream, source, uid, time);
 	case SQLITE_ROW:
-		printf("UUID in DB\n");
-		break;
+		sqlite3_finalize(stmt1);
+		return setUpdateUUID(stream, source, uid, time);
 	default:
 		printf("???\n");
 		break;
