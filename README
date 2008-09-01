@@ -21,6 +21,7 @@ Dependences:
 * OpenGL
 * cmake
 * ossp-uuid
+* sqlite3
 
 Compile and install:
    cd s3d/
