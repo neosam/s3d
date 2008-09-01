@@ -44,7 +44,14 @@ add_executable(s3d_compiler
 	src/compiler.c
 	src/sha1.c)
 
+add_executable(s3d_import
+	src/import.c
+	src/compiler.c
+	src/sha1.c
+	src/manager.c)
+
 install(TARGETS s3d 
 		s3d_display
 		s3d_compiler 
+		s3d_import
 		DESTINATION bin)

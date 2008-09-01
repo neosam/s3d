@@ -26,7 +26,12 @@
 #ifndef MANAGER_H
 #define MANAGER_H
 
-int init();
+#include "sqlite3.h"
+
+extern sqlite3 *db;
+
+int initManager();
+int quitManager();
 
 /*
  * Add a new object or update it in the database.  

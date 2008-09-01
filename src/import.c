@@ -1,5 +1,5 @@
 /*
- * File manager.c
+ * File import.c
  *
  * s3d is the legal property of Simon Goller (neosam@gmail.com).
  *
@@ -20,49 +20,7 @@
 
 #include "manager.h"
 
-sqlite3 *db;
-
-int initManager()
+int main(int argc, char **argv)
 {
 	
-}
-
-int quitManager()
-{
-
-}
-
-int set(char *stream, char *source, int uid)
-{
-
-}
-
-int setSource(char *id, char *source)
-{
-
-}
-
-int setUID(char *id, int uid)
-{
-
-}
-
-char *get(char *id)
-{
-
-}
-
-char *getCurrent(char *uuid)
-{
-
-}
-
-char *getSource(char *id)
-{
-
-}
-
-char *getCurrentSource(char *uuid)
-{
-
 }
