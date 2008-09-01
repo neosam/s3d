@@ -269,8 +269,6 @@ int parseID(char *code, char **id)
 		compilererr = "Could not export uuid to bin";
 		return -1;
 	}
-	uuid_export(uuid, UUID_FMT_STR, (void**)&str, NULL);
-	fprintf(stderr, "%s\n", str);
 	uuid_destroy(uuid);
 
 	assert(*id != NULL);
