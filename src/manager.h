@@ -59,7 +59,7 @@ int setUID(char *id, int uid);
  * Returns the stream of the given ID or NULL on error (maybe id doesn't 
  * exist).
  */
-char *get(char *id);
+char *get(char *name);
 
 /*
  * Returns the stream of the given uuid or NULL on error (maybe uuid doesn't

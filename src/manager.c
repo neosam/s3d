@@ -29,6 +29,8 @@ char *managererr;
 
 char *stmt_set_2 = "INSERT INTO state (name, time, source, stream, UID) "
 "VALUES (:UUID, :time, :source, :stream, :UID);";
+char *stmt_get_1 = "SELECT source from state where name = :name "
+	"order by time limit 1";
 
 int initManager()
 {
@@ -72,10 +74,7 @@ int set(char *name, char *stream, char *source, int uid)
 	char *out;
 	int *istream = (int*)stream;
 	int t = time(NULL);
-	sqlite3_stmt *stmt1;
 
-	printf("%i\n", time);
-	
 	if (insertNewState(name, stream, source, uid, t) < 0)
 		return -1;
 
@@ -92,9 +91,22 @@ int setUID(char *id, int uid)
 
 }
 
-char *get(char *id)
+char *get(char *name)
 {
+	sqlite3_stmt *stmt;
+	const char *out;
 
+	sqlite3_prepare_v2(db, stmt_get_1, strlen(stmt_get_1), &stmt, &out);
+	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
+	switch (sqlite3_step(stmt)) {
+	case SQLITE_DONE:
+		managererr = "Object not in database";
+		return NULL;
+		break;
+	case SQLITE_ROW:
+		return sqlite3_column_text(stmt, 0);
+		break;
+	}
 }
 
 char *getCurrent(char *uuid)
