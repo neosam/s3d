@@ -19,8 +19,7 @@ fi
 
 mkdir $HOME/.s3d
 sqlite3 $HOME/.s3d/manager.db \
-    "CREATE TABLE IDENTIFIER (UUID, time);
-     CREATE TABLE STATE (UUID, time, source, stream, UID);
+    "CREATE TABLE STATE (name, time, source, stream, UID);
      CREATE TABLE AUTOR (UID PRIMARY KEY, name, email);
      INSERT INTO AUTOR (name, email) VALUES (\"$1\", \"$2\");
      INSERT INTO AUTOR (name) VALUES (\"guest\");

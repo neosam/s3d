@@ -41,7 +41,7 @@ int quitManager();
  * later by calling setSource or setUID.
  * Returns 0 on success and -1 on error.
  */
-int set(char *stream, char *source, int uid);
+int set(char *name, char *stream, char *source, int uid);
 
 /*
  * Set the sourcecode of the given id.

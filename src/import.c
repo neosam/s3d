@@ -51,9 +51,9 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	code = cutuuid(code);
+	/* code = cutuuid(code); */
 
-	if (set(stream, code, 0) != 0) {
+	if (set(argv[1], stream, code, 0) != 0) {
 		fprintf(stderr, "MANAGER ERROR: %s\n", managererr);
 		return 1;
 	}

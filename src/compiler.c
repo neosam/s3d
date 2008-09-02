@@ -305,7 +305,7 @@ char *checkCodeHeader(char *code, char **id)
 int getStreamsize(char *stream)
 {
 	int *b = (double*)stream;
-	return *(b+5) + 20;
+	return *b;
 }
 
 char *compile(char *code)
@@ -314,16 +314,17 @@ char *compile(char *code)
 	int headsize, datasize;
 	char *id;
 
-	if ((code = checkCodeHeader(code, &id)) == NULL)
-		return NULL;
+/*	if ((code = checkCodeHeader(code, &id)) == NULL)
+	return NULL; 
 
 	if (id == NULL)
-		fprintf(stderr, "No ID found\n");
+	fprintf(stderr, "No ID found\n");
 
 	if ((headsize = writeHead(stream, id)) < 0)
-		return NULL;
+	return NULL;*/
 
-	if ((datasize = writeData(stream + headsize, code)) < 0)
+	code = skipSpaces(code);
+	if ((datasize = writeData(stream, code)) < 0)
 		return NULL;
 
 	return stream;
