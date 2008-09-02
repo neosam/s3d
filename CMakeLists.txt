@@ -19,7 +19,7 @@ include_directories(${CMAKE_BINARY_DIR}
 # Bind libraries for the linker
 link_libraries(${SDL_LIBRARY}
 #	       ${SDLIMAGE_LIBRARY}
-	       ${OPENGL_LIBRARIES} -lossp-uuid -lsqlite3)
+	       ${OPENGL_LIBRARIES} -lsqlite3)
 #	       ${OPENAL_LIBRARY}
 #	       ${GLU_LIBRARY}
 #	       -lalut)
@@ -41,13 +41,11 @@ add_executable(s3d_display
 
 add_executable(s3d_compiler
 	src/compilermain.c
-	src/compiler.c
-	src/sha1.c)
+	src/compiler.c)
 
 add_executable(s3d_import
 	src/import.c
 	src/compiler.c
-	src/sha1.c
 	src/manager.c)
 
 install(TARGETS s3d 

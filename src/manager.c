@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "manager.h"
 
 sqlite3 *db;
@@ -70,12 +71,12 @@ int set(char *name, char *stream, char *source, int uid)
 {
 	char *out;
 	int *istream = (int*)stream;
-	int time = istream[4];
+	int t = time(NULL);
 	sqlite3_stmt *stmt1;
 
 	printf("%i\n", time);
 	
-	if (insertNewState(name, stream, source, uid, time) < 0)
+	if (insertNewState(name, stream, source, uid, t) < 0)
 		return -1;
 
 	return 0;

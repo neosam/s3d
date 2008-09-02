@@ -31,56 +31,6 @@
 
 void *compilererr;
 
-int insertID(char *stream, char *id)
-{
-	/* If there is no id, I will create a new one */
-	if (id == NULL) {
-		uuid_t *uuid;
-		char str[50];
-		uuid_create(&uuid);
-		uuid_make(uuid, UUID_MAKE_V1);
-		uuid_export(uuid, UUID_FMT_BIN, (void **)&id, NULL);
-		uuid_export(uuid, UUID_FMT_STR, (void **)&str, NULL);
-		uuid_destroy(uuid);
-		fprintf(stderr, "ID of new Tag: %s\n", str);
-	}
-
-	memcpy(stream, id, 16);
-	return 0;
-}
-
-
-/*
- * The Head of the stream object:
- * | uuid | date | parent | author-length | author-name |
- * |16byte| 32bit| 20byte | 8 bit number  |    string   |
- * | object id   |        |      author information     |
- * |                     HEAD                           |
- */
-int writeHead(char *stream, char *id)
-{
-	char *p = stream + 16; /* There is a uuid before the head */
-	unsigned int date = time(NULL);
-	
-	insertID(stream, id);
-
-	/* Set date TODO: ENDIAN */
-	memcpy(p, &date, 4);
-	p += 4;
-
-	/* Length = id + date */
-	return 20;
-}
-
-int insertSha1(char *stream, int size)
-{
-	SHA_CTX sha;
-	SHA1_Init(&sha);
-	SHA1_Update(&sha, stream+20, size);
-	SHA1_Final(stream, &sha);
-	return 0;
-}
-
 char *skipSpaces(char *pc)
 {
 	while(*pc == ' ' || *pc == '\n' || *pc == '\t')
@@ -254,57 +204,9 @@ int writeData(char *stream, char *code)
 	return size;
 }
 
-int parseID(char *code, char **id)
-{
-	uuid_t *uuid;
-	char *str = NULL;
-	
-	uuid_create(&uuid);
-	if (uuid_import(uuid, UUID_FMT_STR, (void *)code, 36) != UUID_RC_OK) {
-		compilererr = "Could not read uuid";
-		return -1;
-	}
-	*id = NULL;
-	if (uuid_export(uuid, UUID_FMT_BIN, (void**) id, NULL) != UUID_RC_OK) {
-		compilererr = "Could not export uuid to bin";
-		return -1;
-	}
-	uuid_destroy(uuid);
-
-	assert(*id != NULL);
-
-	return 0;
-}
-
-/* Reads the head (id) and return the code after ( */
-char *checkCodeHeader(char *code, char **id)
-{
-	if (*code==';') {
-		if (parseID(++code, id) != 0) {
-			if (compilererr == NULL)
-				compilererr = "Could not parse uuid";
-			return NULL;
-		}
-	}
-	else
-		*id = NULL;
-
-	for (;;) {
-		if (*code == '\0') {
-			compilererr = "Unexpected EOF or NULL\n";
-			return NULL;
-		}
-		if (*code == '(') 
-			return code;
-		code++;
-	}
-
-	return code;
-}
-
 int getStreamsize(char *stream)
 {
-	int *b = (double*)stream;
+	int *b = (int*)stream;
 	return *b;
 }
 
@@ -313,15 +215,6 @@ char *compile(char *code)
 	char *stream = MALLOCN(char, 4096);
 	int headsize, datasize;
 	char *id;
-
-/*	if ((code = checkCodeHeader(code, &id)) == NULL)
-	return NULL; 
-
-	if (id == NULL)
-	fprintf(stderr, "No ID found\n");
-
-	if ((headsize = writeHead(stream, id)) < 0)
-	return NULL;*/
 
 	code = skipSpaces(code);
 	if ((datasize = writeData(stream, code)) < 0)
