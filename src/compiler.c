@@ -140,12 +140,22 @@ char *lookupList(char **list, char *key)
 	return NULL;
 }
 
+float *parseV3f(char *parameter)
+{
+	float *res = MALLOCN(float, 3);
+	if (sscanf(parameter, "(%f %f %f)", res, res+1, res+2) != 3) {
+		compilererr = "Expected float tripple";
+		return NULL;
+	}
+	return res;
+}
+
 int writeTriToStream(char *stream, char *tagname, char **parameter)
 {
 	char *v0 = lookupList(parameter, "v0"),
 		*v1 = lookupList(parameter, "v1"),
 		*v2 = lookupList(parameter, "v2");
-	float d0, d1, d2;
+	float *d0, *d1, *d2;
 	const type = 1;
 
 	if (v0 == NULL || v1 == NULL || v2 == NULL) {
@@ -153,16 +163,19 @@ int writeTriToStream(char *stream, char *tagname, char **parameter)
 		return -1;
 	}
 
-	d0 = strtod(v0, NULL);
-	d1 = strtod(v1, NULL);
-	d2 = strtod(v2, NULL);
+	d0 = parseV3f(v0);
+	d1 = parseV3f(v1);
+	d2 = parseV3f(v2);
+
+	if (d0 == NULL || d1 == NULL || d2 == NULL)
+		return -1;
 
 	memcpy(stream, &type, 4);
-	memcpy(stream+4, &d0, 4);
-	memcpy(stream+8, &d1, 4);
-	memcpy(stream+12, &d2, 4);
+	memcpy(stream+4, d0, 12);
+	memcpy(stream+16, d1, 12);
+	memcpy(stream+28, d2, 12);
 
-	return 16;
+	return 40;
 }
 
 int writeTag(char *stream, char *tagname, char **parameter)
