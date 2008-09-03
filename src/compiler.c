@@ -175,6 +175,10 @@ int writeTriToStream(char *stream, char *tagname, char **parameter)
 	memcpy(stream+16, d1, 12);
 	memcpy(stream+28, d2, 12);
 
+	free(d0);
+	free(d1);
+	free(d2);
+
 	return 40;
 }
 
