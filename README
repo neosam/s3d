@@ -18,9 +18,9 @@ You've been warned, HF :)
 
 Dependences:
 * SDL
+* SDL-net
 * OpenGL
 * cmake
-* ossp-uuid
 * sqlite3
 
 Compile and install:
