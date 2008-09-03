@@ -54,6 +54,8 @@ add_executable(s3d_export
 	src/manager.c)
 
 add_executable(s3d_io
+	src/manager.c
+	src/compiler.c
 	src/io.c
 	src/iomain.c)
 

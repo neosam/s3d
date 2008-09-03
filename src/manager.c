@@ -119,7 +119,20 @@ char *getSource(char *id)
 
 }
 
-char *getCurrentSource(char *uuid)
+char *getCurrentSource(char *name)
 {
+	sqlite3_stmt *stmt;
+	const char *out;
 
+	sqlite3_prepare_v2(db, stmt_get_1, strlen(stmt_get_1), &stmt, &out);
+	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
+	switch (sqlite3_step(stmt)) {
+	case SQLITE_DONE:
+		managererr = "Object not in database";
+		return NULL;
+		break;
+	case SQLITE_ROW:
+		return sqlite3_column_text(stmt, 0);
+		break;
+	}
 }

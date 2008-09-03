@@ -24,10 +24,12 @@
 
 #include "io.h"
 #include "misc.h"
+#include "manager.h"
 
 char *ioerr;
 
 struct handleURLItem handleURLList[] = {{"file", handleFILE},
+					{"s3ds", handleS3DS},
 					{NULL, NULL}};
 
 int splitProtokoll(char *url, char **protokoll, char **rest)
@@ -85,6 +87,30 @@ char *handleURL(char *protokoll, char *server, int port, char *rest)
 
 	ioerr = "Protokoll not found";
 	return NULL;
+}
+
+char *handleS3DS(char *server, int port, char *rest)
+{
+	char *res;
+
+	if (initManager() != 0) {
+		ioerr = managererr;
+		return NULL;
+	}
+	
+	if (port != -1 || strcmp(server, "localhost") != 0) {
+		ioerr = "Sorry s3ds just works for localhost at the moment";
+		return NULL;
+	}
+	res = getCurrentSource(rest);
+	if (res == NULL) {
+		ioerr = managererr;
+		return NULL;
+	}
+
+	quitManager();
+
+	return res;
 }
 
 char *handleFILE(char *server, int port, char *rest)

@@ -77,6 +77,6 @@ char *getSource(char *id);
  * Returns the sourcecode of the given uuid or NULL on error (maybe uuid
  * doesn't exist.
  */
-char *getCurrentSource(char *uuid);
+char *getCurrentSource(char *name);
 
 #endif /* MANAGER_H */
