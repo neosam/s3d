@@ -9,6 +9,7 @@ s3d_display
 s3d_compiler
 s3d_import
 s3d_export
+s3d_io
 _lua_tmp.lua
 test/*.s3d
 test/core

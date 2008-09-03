@@ -53,6 +53,10 @@ add_executable(s3d_export
 	src/compiler.c
 	src/manager.c)
 
+add_executable(s3d_io
+	src/io.c
+	src/iomain.c)
+
 install(TARGETS s3d 
 		s3d_display
 		s3d_compiler 
