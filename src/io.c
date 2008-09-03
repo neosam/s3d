@@ -202,7 +202,7 @@ void _listenTCPClient(void *tcpclient)
 		SDL_Delay(100);
 		size = SDLNet_TCP_Recv(tcpclient, data, 4095);
 		data[size] = '\0';
-		if (data[0] == 'g') {
+		if (data[0] == 'd') {
 			data = strtok(data, " \n\t\r");
 			answer = getURL(data+1, "s3ds", &size);
 			if (answer == NULL) {
@@ -212,6 +212,9 @@ void _listenTCPClient(void *tcpclient)
 			SDLNet_TCP_Send(tcpclient, answer, size);
 			if (answer != ioerr)
 				free(answer);
+		}
+		if (data[0] == 'u') {
+			
 		}
 	}
 }
