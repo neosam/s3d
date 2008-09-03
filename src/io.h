@@ -15,4 +15,6 @@ char *handleFILE(char *server, int port, char *rest, int *size);
 char *handleS3D(char *server, int port, char *rest, int *size);
 char *handleS3DS(char *server, int port, char *rest, int *size);
 
+int listenTCP(int port);
+
 #endif /* IO_H */

@@ -22,11 +22,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <SDL.h>
+#include <SDL_net.h>
+
 #include "io.h"
 #include "misc.h"
 #include "manager.h"
 
 char *ioerr;
+int tcplistening = 0;
 
 struct handleURLItem handleURLList[] = {{"file", handleFILE},
 					{"s3ds", handleS3DS},
@@ -186,4 +190,58 @@ char *getURL(char *url, char *defaultp, int *size)
 	fprintf(stderr, "Rest: %s\n", rest);
 
 	return handleURL(protokoll, server, port, rest, size);
+}
+
+void _listenTCPClient(void *tcpclient)
+{
+	char *data = MALLOCN(char, 4096);
+	char *answer;
+	int size;
+
+	while (1) {
+		SDL_Delay(100);
+		size = SDLNet_TCP_Recv(tcpclient, data, 4095);
+		data[size] = '\0';
+		if (data[0] == 'g') {
+			data = strtok(data, " \n\t\r");
+			answer = getURL(data+1, "s3ds", &size);
+			if (answer == NULL) {
+				answer = ioerr;
+				size = strlen(answer);
+			}
+			SDLNet_TCP_Send(tcpclient, answer, size);
+			if (answer != ioerr)
+				free(answer);
+		}
+	}
+}
+
+void _listenTCP(void *tcpsock)
+{
+	TCPsocket sock;
+
+	while (1) {
+		SDL_Delay(100);
+		if ((sock = SDLNet_TCP_Accept(tcpsock)) != NULL) {
+			SDL_CreateThread(_listenTCPClient, (void *)sock);
+		}
+	}
+}
+
+int listenTCP(int port)
+{
+	IPaddress ip;
+	TCPsocket tcpsock;
+	if (SDLNet_ResolveHost(&ip, NULL, port) == -1) {
+		ioerr = "Could not resolve host";
+		return -1;
+	}
+       
+	tcpsock = SDLNet_TCP_Open(&ip);
+	if (!tcpsock) {
+		ioerr = "Could not open tcp listener";
+		return -1;
+	}
+
+	SDL_CreateThread(_listenTCP, (void *)tcpsock);
 }

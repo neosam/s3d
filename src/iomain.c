@@ -19,6 +19,10 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
+#include <SDL.h>
+#include <SDL_net.h>
 
 #include "io.h"
 
@@ -26,6 +30,15 @@ int main(int argc, char **argv)
 {
 	char *res;
 	int size;
+
+	if (strcmp(argv[1], "--serve") == 0) {
+		int port = atoi(argv[2]);
+		SDL_Init(SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE);
+		SDLNet_Init();
+		listenTCP(port);
+		scanf("%s", res);
+		SDLNet_Quit();
+	}
 
 	if (!(res=getURL(argv[1], "file", &size))) {
 		fprintf(stderr, "%s\n", ioerr);
