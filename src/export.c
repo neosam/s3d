@@ -8,7 +8,7 @@
 int main(int argc, char **argv)
 {
 	char *code;
-	FILE *input = fopen(argv[1], "w");
+	FILE *input;
 
 	if (input == NULL) {
 		fprintf(stderr, "Could not create file\n");
@@ -27,6 +27,7 @@ int main(int argc, char **argv)
 
 	quitManager();
 	
+	input = fopen(argv[1], "w");
 	fwrite(code, strlen(code), 1, input);
 
 	return 0;
