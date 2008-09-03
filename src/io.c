@@ -28,6 +28,7 @@
 #include "io.h"
 #include "misc.h"
 #include "manager.h"
+#include "compiler.h"
 
 char *ioerr;
 int tcplistening = 0;
@@ -192,10 +193,42 @@ char *getURL(char *url, char *defaultp, int *size)
 	return handleURL(protokoll, server, port, rest, size);
 }
 
+int listenToCode(TCPsocket tcpclient, char *answer)
+{
+	int brakets = 0;
+	int i;
+	char *data = MALLOCN(char, 4096);
+	int size = 0;
+
+	for (;;) {
+		answer += size;
+		size = SDLNet_TCP_Recv(tcpclient, data, 4095);
+		data[size] = '\0';
+		memcpy(answer, data, size);
+		for (i = 0; i < size; i++) {
+			switch (answer[i]) {
+			case '(':
+				brakets++;
+				break;
+			case ')':
+				brakets--;
+				if (brakets == 0) {
+					answer[i+1] = '\0';
+					return 0;
+				}
+				if (brakets < 0)
+					return -1;
+				break;
+			}
+		}
+	}
+}
+
 void _listenTCPClient(void *tcpclient)
 {
 	char *data = MALLOCN(char, 4096);
 	char *answer;
+	char *name;
 	int size;
 
 	while (1) {
@@ -214,6 +247,24 @@ void _listenTCPClient(void *tcpclient)
 				free(answer);
 		}
 		if (data[0] == 'u') {
+			char *stream;
+			printf("update or insert in ascii\n");
+			answer = MALLOCN(char, 4096);
+			name = strtok(data+1, "\n\t\r");
+			if (listenToCode(tcpclient, answer) == -1)
+				fprintf(stderr, "Something went wrong\n");
+			printf("Name: %s\nCode: %s\n", name, answer);
+			stream = compile(answer);
+			if (stream == NULL) {
+				fprintf(stderr, "COMPILER ERROR: %s\n", 
+					compilererr);
+				break;
+			}
+			if (set(name, stream, answer, 0) != 0) {
+				fprintf(stderr, "MANAGER ERROR: %s\n", 
+					managererr);
+				break;
+			}
 			
 		}
 	}

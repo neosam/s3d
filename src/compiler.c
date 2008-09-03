@@ -33,7 +33,7 @@ void *compilererr;
 
 char *skipSpaces(char *pc)
 {
-	while(*pc == ' ' || *pc == '\n' || *pc == '\t')
+	while(*pc == ' ' || *pc == '\n' || *pc == '\t' || *pc == '\r')
 		if (*pc++ == '\0') {
 			compilererr = "EOF or \\0 in file";
 			return NULL;
