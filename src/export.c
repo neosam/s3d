@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if ((code = get(argv[1])) == NULL) {
+	if ((code = getCurrentSource(argv[1])) == NULL) {
 		fprintf(stderr, "MANAGER ERROR: %s\n", managererr);
 		return 1;
 	}
