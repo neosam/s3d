@@ -30,7 +30,9 @@ char *managererr;
 char *stmt_set_2 = "INSERT INTO state (name, time, source, stream, UID) "
 "VALUES (:UUID, :time, :source, :stream, :UID);";
 char *stmt_get_1 = "SELECT source from state where name = :name "
-	"order by time limit 1";
+	"order by time desc limit 1";
+char *stmt_get_2 = "SELECT stream from state where name = :name "
+	"order by time desc limit 1";
 
 int initManager()
 {
@@ -109,9 +111,22 @@ char *get(char *name)
 	}
 }
 
-char *getCurrent(char *uuid)
+char *getCurrent(char *name)
 {
+	sqlite3_stmt *stmt;
+	const char *out;
 
+	sqlite3_prepare_v2(db, stmt_get_2, strlen(stmt_get_1), &stmt, &out);
+	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
+	switch (sqlite3_step(stmt)) {
+	case SQLITE_DONE:
+		managererr = "Object not in database";
+		return NULL;
+		break;
+	case SQLITE_ROW:
+		return (char *)sqlite3_column_blob(stmt, 0);
+		break;
+	}
 }
 
 char *getSource(char *id)

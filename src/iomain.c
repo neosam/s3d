@@ -25,13 +25,15 @@
 int main(int argc, char **argv)
 {
 	char *res;
+	int size;
 
-	if (!(res=getURL(argv[1], "file"))) {
+	if (!(res=getURL(argv[1], "file", &size))) {
 		fprintf(stderr, "%s\n", ioerr);
 		return 1;
 	}
+	fprintf(stderr, "%i\n", size);
 
-	printf("%s\n", res);
+	fwrite(res, size, 1, stdout);
 
 	return 0;
 }

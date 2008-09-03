@@ -30,6 +30,7 @@ char *ioerr;
 
 struct handleURLItem handleURLList[] = {{"file", handleFILE},
 					{"s3ds", handleS3DS},
+					{"s3d", handleS3D},
 					{NULL, NULL}};
 
 int splitProtokoll(char *url, char **protokoll, char **rest)
@@ -76,12 +77,12 @@ char *splitServer(char *url, char **server, int *port, char **rest)
 	return 0;
 }
 
-char *handleURL(char *protokoll, char *server, int port, char *rest)
+char *handleURL(char *protokoll, char *server, int port, char *rest, int *size)
 {
 	struct handleURLItem *p = handleURLList;
 	while (p->protokoll != NULL) {
 		if (strcmp(p->protokoll, protokoll) == 0)
-			return p->func(server, port, rest);
+			return p->func(server, port, rest, size);
 		p++;
 	}
 
@@ -89,7 +90,7 @@ char *handleURL(char *protokoll, char *server, int port, char *rest)
 	return NULL;
 }
 
-char *handleS3DS(char *server, int port, char *rest)
+char *handleS3DS(char *server, int port, char *rest, int *size)
 {
 	char *res;
 
@@ -110,10 +111,12 @@ char *handleS3DS(char *server, int port, char *rest)
 
 	quitManager();
 
+	*size = strlen(res);
+
 	return res;
 }
 
-char *handleFILE(char *server, int port, char *rest)
+char *handleFILE(char *server, int port, char *rest, int *size)
 {
 	FILE *file;
 	char *res;
@@ -129,11 +132,39 @@ char *handleFILE(char *server, int port, char *rest)
 		ioerr = "cannot open file";
 		return NULL;
 	}
-	fread(res, 4096, 1, file);
+	*size = fread(res, 1, 4096, file);
+
 	return res;
 }
 
-char *getURL(char *url, char *defaultp)
+char *handleS3D(char *server, int port, char *rest, int *size)
+{
+	char *res;
+
+	if (initManager() != 0) {
+		ioerr = managererr;
+		return NULL;
+	}
+	
+	if (port != -1 || strcmp(server, "localhost") != 0) {
+		ioerr = "Sorry s3ds just works for localhost at the moment";
+		return NULL;
+	}
+	res = getCurrent(rest);
+	if (res == NULL) {
+		ioerr = managererr;
+		return NULL;
+	}
+
+	quitManager();
+
+	*size = *((int *)res);
+
+	return res;
+}
+
+
+char *getURL(char *url, char *defaultp, int *size)
 {
 	char *protokoll;
 	char *server;
@@ -154,5 +185,5 @@ char *getURL(char *url, char *defaultp)
 	fprintf(stderr, "Port: %i\n", port);
 	fprintf(stderr, "Rest: %s\n", rest);
 
-	return handleURL(protokoll, server, port, rest);
+	return handleURL(protokoll, server, port, rest, size);
 }
