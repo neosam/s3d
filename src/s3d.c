@@ -55,7 +55,7 @@ int createDisplay()
 	case -1: return 1;
 	case 0: 
 		sprintf(key, "%x\n", magic_key);
-		execlp("./s3d_display", "./n3d_display", key, NULL);
+		execlp("./s3d_display", "./n3d_display", "-m", key, NULL);
 		break;
 	default:
 		displayID = pid;
