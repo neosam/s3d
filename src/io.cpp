@@ -30,7 +30,7 @@
 #include "manager.h"
 #include "compiler.h"
 
-char *ioerr;
+const char *ioerr;
 int tcplistening = 0;
 
 struct handleURLItem handleURLList[] = {{"file", handleFILE},
@@ -169,7 +169,7 @@ char *handleS3D(char *server, int port, char *rest, int *size)
 }
 
 
-char *getURL(char *url, char *defaultp, int *size)
+char *getURL(char *url, const char *defaultp, int *size)
 {
 	char *protokoll;
 	char *server;
@@ -180,7 +180,7 @@ char *getURL(char *url, char *defaultp, int *size)
 		return NULL;
 
 	if (protokoll == NULL)
-		protokoll = defaultp;
+	  protokoll = (char *)defaultp;
 
 	if (splitServer(rest, &server, &port, &rest) != 0)
 		return NULL;
@@ -224,7 +224,7 @@ int listenToCode(TCPsocket tcpclient, char *answer)
 	}
 }
 
-void _listenTCPClient(void *tcpclient)
+int _listenTCPClient(void *tcpclient)
 {
 	char *data = MALLOCN(char, 4096);
 	char *answer;
@@ -233,16 +233,16 @@ void _listenTCPClient(void *tcpclient)
 
 	while (1) {
 		SDL_Delay(100);
-		size = SDLNet_TCP_Recv(tcpclient, data, 4095);
+		size = SDLNet_TCP_Recv((TCPsocket)tcpclient, data, 4095);
 		data[size] = '\0';
 		if (data[0] == 'd') {
 			data = strtok(data, " \n\t\r");
 			answer = getURL(data+1, "s3ds", &size);
 			if (answer == NULL) {
-				answer = ioerr;
+			  answer = (char *)ioerr;
 				size = strlen(answer);
 			}
-			SDLNet_TCP_Send(tcpclient, answer, size);
+			SDLNet_TCP_Send((TCPsocket)tcpclient, answer, size);
 			if (answer != ioerr)
 				free(answer);
 		}
@@ -251,7 +251,7 @@ void _listenTCPClient(void *tcpclient)
 			printf("update or insert in ascii\n");
 			answer = MALLOCN(char, 4096);
 			name = strtok(data+1, "\n\t\r");
-			if (listenToCode(tcpclient, answer) == -1)
+			if (listenToCode((TCPsocket)tcpclient, answer) == -1)
 				fprintf(stderr, "Something went wrong\n");
 			printf("Name: %s\nCode: %s\n", name, answer);
 			stream = compile(answer);
@@ -270,13 +270,13 @@ void _listenTCPClient(void *tcpclient)
 	}
 }
 
-void _listenTCP(void *tcpsock)
+int _listenTCP(void *tcpsock)
 {
 	TCPsocket sock;
 
 	while (1) {
 		SDL_Delay(100);
-		if ((sock = SDLNet_TCP_Accept(tcpsock)) != NULL) {
+		if ((sock = SDLNet_TCP_Accept((TCPsocket)tcpsock)) != NULL) {
 			SDL_CreateThread(_listenTCPClient, (void *)sock);
 		}
 	}

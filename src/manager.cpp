@@ -23,9 +23,10 @@
 #include <string.h>
 #include <time.h>
 #include "manager.h"
+#include "compiler.h"
 
 sqlite3 *db;
-char *managererr;
+const char *managererr;
 
 char *stmt_set_2 = "INSERT INTO state (name, time, source, stream, UID) "
 "VALUES (:UUID, :time, :source, :stream, :UID);";
@@ -106,7 +107,7 @@ char *get(char *name)
 		return NULL;
 		break;
 	case SQLITE_ROW:
-		return sqlite3_column_text(stmt, 0);
+	  return (char*)sqlite3_column_text(stmt, 0);
 		break;
 	}
 }
@@ -147,7 +148,7 @@ char *getCurrentSource(char *name)
 		return NULL;
 		break;
 	case SQLITE_ROW:
-		return sqlite3_column_text(stmt, 0);
+	  return (char*)sqlite3_column_text(stmt, 0);
 		break;
 	}
 }

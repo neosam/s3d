@@ -32,32 +32,32 @@ ADD_DEFINITIONS(-g)
 
 # Create n3dViewer executable
 add_executable(s3d
-	src/s3d.c
-	src/msgqueue.c)
+	src/s3d.cpp
+	src/msgqueue.cpp)
 
 add_executable(s3d_display
-	src/display.c
-	src/msgqueue.c)
+	src/display.cpp
+	src/msgqueue.cpp)
 
 add_executable(s3d_compiler
-	src/compilermain.c
-	src/compiler.c)
+	src/compilermain.cpp
+	src/compiler.cpp)
 
 add_executable(s3d_import
-	src/import.c
-	src/compiler.c
-	src/manager.c)
+	src/import.cpp
+	src/compiler.cpp
+	src/manager.cpp)
 
 add_executable(s3d_export
-	src/export.c
-	src/compiler.c
-	src/manager.c)
+	src/export.cpp
+	src/compiler.cpp
+	src/manager.cpp)
 
 add_executable(s3d_io
-	src/manager.c
-	src/compiler.c
-	src/io.c
-	src/iomain.c)
+	src/manager.cpp
+	src/compiler.cpp
+	src/io.cpp
+	src/iomain.cpp)
 
 install(TARGETS s3d 
 		s3d_display
