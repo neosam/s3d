@@ -125,8 +125,22 @@ int initDisplay()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, checkImageWidth, 
 		     checkImageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
 		     checkImage);
-	
+
 	return 0;
+}
+
+void drawObject(char *obj)
+{
+	GLuint objlength = *((GLuint *)obj);
+	obj += 4;
+
+	while (obj-- != 0) {
+		glBindTexture(GL_TEXTURE_2D, *((GLuint *)obj));
+		obj += 4;
+		glInterleavedArrays(GL_T2F_N3F_V3F, *((GLuint *)obj),
+			                                      obj + 4);
+		glDrawArrays(GL_TRIANGLES, 0, *((GLuint *) obj));
+	}
 }
 
 void display()
