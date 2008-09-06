@@ -1,7 +1,7 @@
 #ifndef IO_H
 #define IO_H
 
-extern const char *ioerr;
+extern char *ioerr;
 
 struct handleURLItem {
 	char *protokoll;
@@ -9,7 +9,7 @@ struct handleURLItem {
 };
 extern struct handleURLItem handleURLList[]; 
 
-char *getURL(char *url, const char *defaultp, int *size);
+char *getURL(char *url, char *defaultp, int *size);
 
 char *handleFILE(char *server, int port, char *rest, int *size);
 char *handleS3D(char *server, int port, char *rest, int *size);

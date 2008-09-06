@@ -21,7 +21,7 @@
 #ifndef COMPILER_H
 #define COMPILER_H
 
-extern const void *compilererr;
+extern void *compilererr;
 
 char *compile(char *code);
 int getStreamsize(char *stream);

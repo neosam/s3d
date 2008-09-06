@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "msgqueue.h"
 #include "global.h"
 #include "errno.h"

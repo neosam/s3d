@@ -29,7 +29,7 @@
 #include "sqlite3.h"
 
 extern sqlite3 *db;
-extern const char *managererr;
+extern char *managererr;
 
 int initManager();
 int quitManager();

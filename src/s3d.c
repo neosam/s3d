@@ -23,18 +23,10 @@
 #include <sys/types.h>
 #include <sys/msg.h>
 #include <sys/signal.h>
-#include <sys/wait.h>
 #include "global.h"
 #include "msgqueue.h"
 
 pid_t displayID;
-
-int quitProcesses()
-{
-	kill(displayID, SIGTERM);
-       
-	return 0;
-}
 
 void quit(int signal)
 {
@@ -75,6 +67,13 @@ int createProcesses()
 {
 	if (createDisplay() != 0)
 		return 1;
+}
+
+int quitProcesses()
+{
+	kill(displayID, SIGTERM);
+       
+	return 0;
 }
 
 int handleProcesses()

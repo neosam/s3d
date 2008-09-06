@@ -29,7 +29,7 @@
 #include "sha1.h"
 #include "misc.h"
 
-const void *compilererr;
+void *compilererr;
 
 char *skipSpaces(char *pc)
 {
@@ -156,7 +156,7 @@ int writeTriToStream(char *stream, char *tagname, char **parameter)
 		*v1 = lookupList(parameter, "v1"),
 		*v2 = lookupList(parameter, "v2");
 	float *d0, *d1, *d2;
-	const int type = 1;
+	const type = 1;
 
 	if (v0 == NULL || v1 == NULL || v2 == NULL) {
 		compilererr = "Not all parameter defined";
