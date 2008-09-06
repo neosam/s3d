@@ -22,18 +22,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <string>
 #include "manager.h"
 #include "compiler.h"
 
 sqlite3 *db;
 const char *managererr;
 
-const char *stmt_set_2 = "INSERT INTO state (name, time, source, stream, UID) "
-	"VALUES (:UUID, :time, :source, :stream, :UID);";
-const char *stmt_get_1 = "SELECT source from state where name = :name "
+char *stmt_set_2 = "INSERT INTO state (name, time, source, stream, UID) "
+"VALUES (:UUID, :time, :source, :stream, :UID);";
+char *stmt_get_1 = "SELECT source from state where name = :name "
 	"order by time desc limit 1";
-const char *stmt_get_2 = "SELECT stream from state where name = :name "
+char *stmt_get_2 = "SELECT stream from state where name = :name "
 	"order by time desc limit 1";
 
 int initManager()
@@ -108,7 +107,7 @@ char *get(char *name)
 		return NULL;
 		break;
 	case SQLITE_ROW:
-		return (char *)sqlite3_column_text(stmt, 0);
+	  return (char*)sqlite3_column_text(stmt, 0);
 		break;
 	}
 }
@@ -149,97 +148,7 @@ char *getCurrentSource(char *name)
 		return NULL;
 		break;
 	case SQLITE_ROW:
-		return (char *)sqlite3_column_text(stmt, 0);
+	  return (char*)sqlite3_column_text(stmt, 0);
 		break;
 	}
 }
-
-
-
-
-
-s3d::Manager::Manager() throw (char*)
-{
-	char *home = getenv("HOME");
-	char filename[256];
-	sprintf(filename, "%s/.s3d/manager.db", home);
-	if (sqlite3_open(filename, &db) != SQLITE_OK)
-		throw("Could not open database");
-}
-
-s3d::Manager::~Manager() throw (char*)
-{
-	sqlite3_close(db);
-}
-
-void s3d::Manager::set(char *name, char *stream, char *source, int uid)
-	throw (char*)
-{
-	char *out;
-	int *istream = (int*)stream;
-	int t = time(NULL);
-
-	if (insertNewState(name, stream, source, uid, t) < 0)
-		throw managererr;
-}
-
-void s3d::Manager::setSource(char *id, char *source) throw (char*)
-{
-
-}
-
-void s3d::Manager::setUID(char *id, int uid) throw (char*)
-{
-
-}
-
-char *s3d::Manager::get(char *name) throw (char*)
-{
-	sqlite3_stmt *stmt;
-	const char *out;
-
-	sqlite3_prepare_v2(db, stmt_get_1, strlen(stmt_get_1), &stmt, &out);
-	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
-	switch (sqlite3_step(stmt)) {
-	case SQLITE_DONE:
-		throw("Object not in database");
-	case SQLITE_ROW:
-		return (char *)sqlite3_column_text(stmt, 0);
-	}
-}
-
-char *s3d::Manager::getCurrent(char *name) throw (char*)
-{
-	sqlite3_stmt *stmt;
-	const char *out;
-
-	sqlite3_prepare_v2(db, stmt_get_2, strlen(stmt_get_1), &stmt, &out);
-	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
-	switch (sqlite3_step(stmt)) {
-	case SQLITE_DONE:
-		throw("Object not in database");
-	case SQLITE_ROW:
-		return (char *)sqlite3_column_blob(stmt, 0);
-	}
-}
-
-char *s3d::Manager::getSource(char *id) throw (char*)
-{
-
-}
-
-char *s3d::Manager::getCurrentSource(char *name) throw (char*)
-{
-	sqlite3_stmt *stmt;
-	const char *out;
-
-	sqlite3_prepare_v2(db, stmt_get_1, strlen(stmt_get_1), &stmt, &out);
-	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
-	switch (sqlite3_step(stmt)) {
-	case SQLITE_DONE:
-		throw("Object not in database");
-	case SQLITE_ROW:
-		return (char *)sqlite3_column_text(stmt, 0);
-	}
-}
-

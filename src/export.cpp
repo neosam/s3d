@@ -21,37 +21,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <iostream>
 
 #include "manager.h"
 
-using namespace std;
 
 int main(int argc, char **argv)
 {
-	try {
-		s3d::Manager manager;
-		char *code;
-		FILE *input;
-		
-		if (input == NULL) {
-			fprintf(stderr, "Could not create file\n");
-			return 1;
-		}
-		
-		code = manager.getCurrentSource(argv[1]);
-		
-		input = fopen(argv[1], "w");
-		fwrite(code, strlen(code), 1, input);
-		
-		return 0;
-	}
-	catch (char *error) {
-		cout << error << endl;
+	char *code;
+	FILE *input;
+
+	if (input == NULL) {
+		fprintf(stderr, "Could not create file\n");
 		return 1;
 	}
-	catch (...) {
-		cout << "Unknows error" << endl;
+
+	if (initManager() != 0) {
+		fprintf(stderr, "MANAGER ERROR: %s\n", managererr);
 		return 1;
 	}
+
+	if ((code = getCurrentSource(argv[1])) == NULL) {
+		fprintf(stderr, "MANAGER ERROR: %s\n", managererr);
+		return 1;
+	}
+
+	quitManager();
+	
+	input = fopen(argv[1], "w");
+	fwrite(code, strlen(code), 1, input);
+
+	return 0;
 }
