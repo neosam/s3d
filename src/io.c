@@ -29,6 +29,7 @@
 #include "misc.h"
 #include "manager.h"
 #include "compiler.h"
+#include "exception.h"
 
 char *ioerr;
 int tcplistening = 0;
@@ -99,23 +100,13 @@ char *handleS3DS(char *server, int port, char *rest, int *size)
 {
 	char *res;
 
-	if (initManager() != 0) {
-		ioerr = managererr;
-		return NULL;
-	}
-	
-	if (port != -1 || strcmp(server, "localhost") != 0) {
-		ioerr = "Sorry s3ds just works for localhost at the moment";
-		return NULL;
-	}
+	THROWIF(port != -1, -1, "Sorry s3d just works with port -1");
+	THROWIF(strcmp(server, "localhost"), -1,
+		"Sorry, s3d just with localhost");
+
+	initManager();
 	res = getCurrentSource(rest);
-	if (res == NULL) {
-		ioerr = managererr;
-		return NULL;
-	}
-
 	quitManager();
-
 	*size = strlen(res);
 
 	return res;
@@ -146,23 +137,13 @@ char *handleS3D(char *server, int port, char *rest, int *size)
 {
 	char *res;
 
-	if (initManager() != 0) {
-		ioerr = managererr;
-		return NULL;
-	}
-	
-	if (port != -1 || strcmp(server, "localhost") != 0) {
-		ioerr = "Sorry s3ds just works for localhost at the moment";
-		return NULL;
-	}
+	THROWIF(port != -1, -1, "Sorry s3d just works with port -1");
+	THROWIF(strcmp(server, "localhost"), -1,
+		"Sorry, s3d just with localhost");
+
+	initManager();
 	res = getCurrent(rest);
-	if (res == NULL) {
-		ioerr = managererr;
-		return NULL;
-	}
-
 	quitManager();
-
 	*size = *((int *)res);
 
 	return res;
@@ -260,12 +241,8 @@ void _listenTCPClient(void *tcpclient)
 					compilererr);
 				break;
 			}
-			if (set(name, stream, answer, 0) != 0) {
-				fprintf(stderr, "MANAGER ERROR: %s\n", 
-					managererr);
-				break;
-			}
 			
+			set(name, stream, answer, 0);
 		}
 	}
 }
@@ -277,7 +254,8 @@ void _listenTCP(void *tcpsock)
 	while (1) {
 		SDL_Delay(100);
 		if ((sock = SDLNet_TCP_Accept(tcpsock)) != NULL) {
-			SDL_CreateThread(_listenTCPClient, (void *)sock);
+			SDL_CreateThread(_listenTCPClient, 
+					 (void *)sock);
 		}
 	}
 }

@@ -21,25 +21,22 @@
 #include <stdio.h>
 #include "compiler.h"
 #include "misc.h"
+#include "exception.h"
 
 int main(int argc, char **argv)
 {
 	char *stream;
 	char *code = MALLOCN(char, 4096);
 	FILE *input = fopen(argv[1], "r");
-	
+
+	TRY;
 	fread(code, 4096, 1, input);
-
 	stream = compile(code);
-	if (stream == NULL) {
-		fprintf(stderr, "ERROR %s\n", compilererr);
-		return 1;
-	}
-
-	fprintf(stderr, "%i\n", getStreamsize(stream));
-	
 	fwrite(stream, getStreamsize(stream), 1, stdout);
 	fflush(stdout);
 
+	CATCH;
+	fprintf(stderr, "ERROR: %s\n", excmsg);
+	TRYEND;
 	return 0;
 }

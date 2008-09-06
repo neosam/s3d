@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "manager.h"
+#include "exception.h"
 
 
 int main(int argc, char **argv)
@@ -30,25 +31,22 @@ int main(int argc, char **argv)
 	char *code;
 	FILE *input;
 
+	TRY
+	initManager();
+	code = getCurrentSource(argv[1]);
+	quitManager();
+	
+	input = fopen(argv[1], "w");
 	if (input == NULL) {
 		fprintf(stderr, "Could not create file\n");
 		return 1;
 	}
-
-	if (initManager() != 0) {
-		fprintf(stderr, "MANAGER ERROR: %s\n", managererr);
-		return 1;
-	}
-
-	if ((code = getCurrentSource(argv[1])) == NULL) {
-		fprintf(stderr, "MANAGER ERROR: %s\n", managererr);
-		return 1;
-	}
-
-	quitManager();
-	
-	input = fopen(argv[1], "w");
 	fwrite(code, strlen(code), 1, input);
+	
+	CATCH
+	fprintf(stderr, "ERROR: %s\n", excmsg);
+	TRYEND
+		
 
 	return 0;
 }

@@ -41,22 +41,26 @@ add_executable(s3d_display
 
 add_executable(s3d_compiler
 	src/compilermain.c
+	src/exception.c
 	src/compiler.c)
 
 add_executable(s3d_import
 	src/import.c
 	src/compiler.c
+	src/exception.c
 	src/manager.c)
 
 add_executable(s3d_export
 	src/export.c
 	src/compiler.c
+	src/exception.c
 	src/manager.c)
 
 add_executable(s3d_io
 	src/manager.c
 	src/compiler.c
 	src/io.c
+	src/exception.c
 	src/iomain.c)
 
 install(TARGETS s3d 

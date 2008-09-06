@@ -28,16 +28,14 @@
 #include "compiler.h"
 #include "sha1.h"
 #include "misc.h"
+#include "exception.h"
 
 void *compilererr;
 
 char *skipSpaces(char *pc)
 {
 	while(*pc == ' ' || *pc == '\n' || *pc == '\t' || *pc == '\r')
-		if (*pc++ == '\0') {
-			compilererr = "EOF or \\0 in file";
-			return NULL;
-		}
+		THROWIF(*pc++ == '\0', -1, "EOF or \\0 in file");
 	return pc;
 }
 
@@ -46,14 +44,8 @@ char *scanTagname(char **tagname, char *pc)
 	int i;
 	char *t;
 
-	if (*pc++ != '(') {
-		compilererr = "Expected (";
-		return NULL;
-	}
- 
-	if ((pc =skipSpaces(pc)) == NULL)
-		return NULL;
-
+	THROWIF(*pc++ != '(', -1, "Expected (");
+	pc = skipSpaces(pc);
 	*tagname = MALLOCN(char, 256);
 	t = *tagname;
 
@@ -78,10 +70,7 @@ char *scanParameter(char **param, char *pc)
 	*name = '\0';
        
 	/* Check for =" */
-	if (*++pc != '"') {
-		compilererr = "Expected \"";
-		return NULL;
-	}
+	THROWIF(*++pc != '"', -1, "Expected \"");
 	pc++;
 
         /* scan value */
@@ -100,30 +89,22 @@ char *scanParameterlist(char ***parameter, char *pc)
 
 	*param = NULL;
 
-	if (*pc++ != '(') {
-		compilererr = "Expected ( at parameter";
-		return NULL;
-	}
+	THROWIF(*pc++ != '(', -1, "Expected ( at parameter");
 
 	for (;;) {
-		if ((pc = skipSpaces(pc)) == NULL)
-			return NULL;
+		pc = skipSpaces(pc);
 		if (*pc == ')')
 			return ++pc;
-		if ((pc = scanParameter(param, pc)) == NULL)
-			return NULL;
+		scanParameter(param, pc);
 		param += 2;
 	}
 }
 
 char *scanTag(char *pc, char **tagname, char ***parameter)
 {
-	if ((pc = scanTagname(tagname, pc)) == NULL)
-		return NULL;
-	if ((pc = skipSpaces(pc)) == NULL)
-		return NULL;
-	if ((pc = scanParameterlist(parameter, pc)) == NULL)
-	    return NULL;
+	pc = scanTagname(tagname, pc);
+	pc = skipSpaces(pc);
+	pc = scanParameterlist(parameter, pc);
 
 	return pc;
 }
@@ -143,10 +124,8 @@ char *lookupList(char **list, char *key)
 float *parseV3f(char *parameter)
 {
 	float *res = MALLOCN(float, 3);
-	if (sscanf(parameter, "(%f %f %f)", res, res+1, res+2) != 3) {
-		compilererr = "Expected float tripple";
-		return NULL;
-	}
+	THROWIF(sscanf(parameter, "(%f %f %f)", res, res+1, res+2) != 3, -1,
+		"Expected float tripple");
 	return res;
 }
 
@@ -158,17 +137,12 @@ int writeTriToStream(char *stream, char *tagname, char **parameter)
 	float *d0, *d1, *d2;
 	const type = 1;
 
-	if (v0 == NULL || v1 == NULL || v2 == NULL) {
-		compilererr = "Not all parameter defined";
-		return -1;
-	}
+	THROWIF(v0 == NULL || v1 == NULL || v2 == NULL, -1, 
+		"Not all parameter defined");
 
 	d0 = parseV3f(v0);
 	d1 = parseV3f(v1);
 	d2 = parseV3f(v2);
-
-	if (d0 == NULL || d1 == NULL || d2 == NULL)
-		return -1;
 
 	memcpy(stream, &type, 4);
 	memcpy(stream+4, d0, 12);
@@ -186,8 +160,7 @@ int writeTag(char *stream, char *tagname, char **parameter)
 {
 	if (strcmp(tagname, "tri") == 0)
 		return writeTriToStream(stream, tagname, parameter);
-	compilererr = "Tagname not found";
-	return -1;
+	THROWS(-1, "Tagname not found");
 }
 
 int writeData(char *stream, char *code)
@@ -198,20 +171,11 @@ int writeData(char *stream, char *code)
 	char **parameter;
 	int size;
 
-	if ((pc = scanTag(pc, &tagname, &parameter)) == NULL) 
-		return -1;
+	pc = scanTag(pc, &tagname, &parameter);
+	pc = skipSpaces(pc);
+	THROWIF(*pc != ')', -1, "Expected ) at end of file");
+	size = writeTag(stream + 4, tagname, parameter);
 
-	if ((pc = skipSpaces(pc)) == NULL)
-		return -2;
-
-	if (*pc != ')') {
-		compilererr = "Expected ) at end of file";
-		return -3;
-	}
-
-	if ((size = writeTag(stream + 4, tagname, parameter)) < 0)
-		return -4;
-	
 	size += 4;
 	memcpy(stream, &size, 4);
 
@@ -234,8 +198,7 @@ char *compile(char *code)
 	char *id;
 
 	code = skipSpaces(code);
-	if ((datasize = writeData(stream, code)) < 0)
-		return NULL;
+	datasize = writeData(stream, code);
 
 	return stream;
 }

@@ -4,7 +4,7 @@
 #include <setjmp.h>
 
 jmp_buf jumper[256];
-int excpos = 0;
+extern int excpos;
 int exclast;
 const char* excmsg;
 

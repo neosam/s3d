@@ -22,15 +22,7 @@
 #include "manager.h"
 #include "compiler.h"
 #include "misc.h"
-
-char *cutuuid(char *source)
-{
-	if (source[0] != ';')
-		return source;
-
-	while (*source++ != '\n');
-	return source;
-}
+#include "exception.h"
 
 int main(int argc, char **argv)
 {
@@ -38,25 +30,20 @@ int main(int argc, char **argv)
 	char *stream;
 	FILE *input = fopen(argv[1], "r");
 
-	if (initManager() != 0) {
-		fprintf(stderr, "MANAGER ERROR: %s\n", managererr);
-		return 1;
-	}
+	TRY;
+	initManager();
 
 	fread(code, 4096, 1, input);
-	
 	stream = compile(code);
 	if (stream == NULL) {
 		fprintf(stderr, "COMPILER ERROR: %s\n", compilererr);
 		return 1;
 	}
 
-	/* code = cutuuid(code); */
-
-	if (set(argv[1], stream, code, 0) != 0) {
-		fprintf(stderr, "MANAGER ERROR: %s\n", managererr);
-		return 1;
-	}
-	
+	set(argv[1], stream, code, 0);
 	quitManager();
+
+	CATCH;
+	fprintf(stderr, "ERROR: %s\n", excmsg);
+	TRYEND;
 }

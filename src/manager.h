@@ -31,8 +31,8 @@
 extern sqlite3 *db;
 extern char *managererr;
 
-int initManager();
-int quitManager();
+void initManager();
+void quitManager();
 
 /*
  * Add a new object or update it in the database.  
@@ -41,19 +41,19 @@ int quitManager();
  * later by calling setSource or setUID.
  * Returns 0 on success and -1 on error.
  */
-int set(char *name, char *stream, char *source, int uid);
+void set(char *name, char *stream, char *source, int uid);
 
 /*
  * Set the sourcecode of the given id.
  * Returns 0 on success or -1 on error.
  */
-int setSource(char *id, char *source);
+void setSource(char *id, char *source);
 
 /*
  * Set the uid of the given id.
  * Returns 0 on success or -1 on error.
  */
-int setUID(char *id, int uid);
+void setUID(char *id, int uid);
 
 /*
  * Returns the stream of the given ID or NULL on error (maybe id doesn't 

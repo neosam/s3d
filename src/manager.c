@@ -23,6 +23,7 @@
 #include <string.h>
 #include <time.h>
 #include "manager.h"
+#include "exception.h"
 
 sqlite3 *db;
 char *managererr;
@@ -34,27 +35,24 @@ char *stmt_get_1 = "SELECT source from state where name = :name "
 char *stmt_get_2 = "SELECT stream from state where name = :name "
 	"order by time desc limit 1";
 
-int initManager()
+void initManager()
 {
 	char *home = getenv("HOME");
 	char filename[256];
 	sprintf(filename, "%s/.s3d/manager.db", home);
-	if (sqlite3_open(filename, &db) != SQLITE_OK) {
-		managererr = "Could not open database";
-		return -1;
-	}
+	THROWIF(sqlite3_open(filename, &db) != SQLITE_OK, -1, 
+		"Could not open database");
 }
 
-int quitManager()
+void quitManager()
 {
 	sqlite3_close(db);
 }
 
-int insertNewState(char *name, char *stream, char *source, int uid, int time)
+void insertNewState(char *name, char *stream, char *source, int uid, int time)
 {
 	const char *out;
 
-	printf("Insert state\n");
 	sqlite3_stmt *stmt2;
 	sqlite3_prepare_v2(db, stmt_set_2, strlen(stmt_set_2), &stmt2, &out);
 	sqlite3_bind_text(stmt2, 1, name, -1, SQLITE_STATIC);
@@ -63,32 +61,25 @@ int insertNewState(char *name, char *stream, char *source, int uid, int time)
 	sqlite3_bind_blob(stmt2, 4, (void *)stream, 
 			  getStreamsize(stream), SQLITE_STATIC);
 	sqlite3_bind_int(stmt2, 5, uid);
-	if (sqlite3_step(stmt2) != SQLITE_DONE) {
-		managererr = "Could not create state";
-		return -1;
-	}
-
-	return 0;
+	THROWIF(sqlite3_step(stmt2) != SQLITE_DONE, -1,
+		"Could not create state")
 }
 
-int set(char *name, char *stream, char *source, int uid)
+void set(char *name, char *stream, char *source, int uid)
 {
 	char *out;
 	int *istream = (int*)stream;
 	int t = time(NULL);
 
-	if (insertNewState(name, stream, source, uid, t) < 0)
-		return -1;
-
-	return 0;
+	insertNewState(name, stream, source, uid, t);
 }
 
-int setSource(char *id, char *source)
+void setSource(char *id, char *source)
 {
 
 }
 
-int setUID(char *id, int uid)
+void setUID(char *id, int uid)
 {
 
 }
@@ -102,11 +93,9 @@ char *get(char *name)
 	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
 	switch (sqlite3_step(stmt)) {
 	case SQLITE_DONE:
-		managererr = "Object not in database";
-		return NULL;
-		break;
+		THROWS(-1, "Object not in database");
 	case SQLITE_ROW:
-		return sqlite3_column_text(stmt, 0);
+		return (char*)sqlite3_column_text(stmt, 0);
 		break;
 	}
 }
@@ -120,9 +109,7 @@ char *getCurrent(char *name)
 	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
 	switch (sqlite3_step(stmt)) {
 	case SQLITE_DONE:
-		managererr = "Object not in database";
-		return NULL;
-		break;
+		THROWS(-1, "Object not in database");
 	case SQLITE_ROW:
 		return (char *)sqlite3_column_blob(stmt, 0);
 		break;
@@ -143,11 +130,9 @@ char *getCurrentSource(char *name)
 	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
 	switch (sqlite3_step(stmt)) {
 	case SQLITE_DONE:
-		managererr = "Object not in database";
-		return NULL;
-		break;
+		THROWS(-1, "Object not in database");
 	case SQLITE_ROW:
-		return sqlite3_column_text(stmt, 0);
+		return (char *)sqlite3_column_text(stmt, 0);
 		break;
 	}
 }
