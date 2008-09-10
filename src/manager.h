@@ -28,6 +28,11 @@
 
 #include "sqlite3.h"
 
+/* Exceptions */
+#define EXC_MAN_OPENDB -1
+#define EXC_MAN_INSERT -2
+#define EXC_MAN_OBJNOTINDB -3
+
 extern sqlite3 *db;
 extern char *managererr;
 

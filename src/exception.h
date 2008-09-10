@@ -8,7 +8,26 @@ extern int excpos;
 int exclast;
 const char* excmsg;
 
-#define THROW(exc) { exclast = exc; longjmp(jumper[excpos--], exc); }
+#ifdef EXCOFF
+#define THROW(exc) {}
+#define THROWS(exc, str) {}
+#define THROWDOWN
+#define TRHOWIF(exp, exc, str) {}
+#else
+#ifdef EXCWARN
+#define THROW(exc)                                                       \
+{                                                                        \
+	exclast = exc;                                                   \
+	printf("WARNING: Exception ##exc## thrown\n");                   \
+	longjmp(jumper[excpos--], exc);                                  \
+}                          
+#else
+#define THROW(exc)                                                       \
+{                                                                        \
+	exclast = exc;                                                   \
+	longjmp(jumper[excpos--], exc);                                  \
+}    
+#endif                      
 #define THROWDOWN THROW(exclast)
 #define THROWS(exc, str)                                                 \
 {                                                                        \
@@ -18,7 +37,15 @@ const char* excmsg;
 #define THROWIF(expression, exc, str)                                    \
 	if (expression)							 \
 		THROWS(exc, str)
+#endif
 
+
+#ifdef EXCOFF
+#define TRY
+#define CATCHIF(exc) if (0)
+#define CATCH if (0)
+#define TRYEND 
+#else
 #define TRY                                                              \
 switch (setjmp(jumper[++excpos])) {                                      \
 case 0:
@@ -34,5 +61,6 @@ break;                                                                   \
 default:
 
 #define TRYEND excpos--; break;} 
+#endif
 
 #endif

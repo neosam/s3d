@@ -40,7 +40,7 @@ void initManager()
 	char *home = getenv("HOME");
 	char filename[256];
 	sprintf(filename, "%s/.s3d/manager.db", home);
-	THROWIF(sqlite3_open(filename, &db) != SQLITE_OK, -1, 
+	THROWIF(sqlite3_open(filename, &db) != SQLITE_OK, EXC_MAN_OPENDB, 
 		"Could not open database");
 }
 
@@ -61,7 +61,7 @@ void insertNewState(char *name, char *stream, char *source, int uid, int time)
 	sqlite3_bind_blob(stmt2, 4, (void *)stream, 
 			  getStreamsize(stream), SQLITE_STATIC);
 	sqlite3_bind_int(stmt2, 5, uid);
-	THROWIF(sqlite3_step(stmt2) != SQLITE_DONE, -1,
+	THROWIF(sqlite3_step(stmt2) != SQLITE_DONE, EXC_MAN_INSERT,
 		"Could not create state")
 }
 
@@ -93,7 +93,7 @@ char *get(char *name)
 	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
 	switch (sqlite3_step(stmt)) {
 	case SQLITE_DONE:
-		THROWS(-1, "Object not in database");
+		THROWS(EXC_MAN_OBJNOTINDB, "Object not in database");
 	case SQLITE_ROW:
 		return (char*)sqlite3_column_text(stmt, 0);
 		break;
@@ -109,7 +109,7 @@ char *getCurrent(char *name)
 	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
 	switch (sqlite3_step(stmt)) {
 	case SQLITE_DONE:
-		THROWS(-1, "Object not in database");
+		THROWS(EXC_MAN_OBJNOTINDB, "Object not in database");
 	case SQLITE_ROW:
 		return (char *)sqlite3_column_blob(stmt, 0);
 		break;
@@ -130,7 +130,7 @@ char *getCurrentSource(char *name)
 	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
 	switch (sqlite3_step(stmt)) {
 	case SQLITE_DONE:
-		THROWS(-1, "Object not in database");
+		THROWS(EXC_MAN_OBJNOTINDB, "Object not in database");
 	case SQLITE_ROW:
 		return (char *)sqlite3_column_text(stmt, 0);
 		break;

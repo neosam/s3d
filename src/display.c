@@ -28,9 +28,11 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include "msgqueue.h"
+#include "misc.h"
 
 int done = 0;
 char *disperr;
+char *obj;
 
 #define checkImageWidth 64
 #define checkImageHeight 64
@@ -134,11 +136,10 @@ void drawObject(char *obj)
 	GLuint objlength = *((GLuint *)obj);
 	obj += 4;
 
-	while (obj-- != 0) {
+	while (objlength-- != 0) {
 		glBindTexture(GL_TEXTURE_2D, *((GLuint *)obj));
 		obj += 4;
-		glInterleavedArrays(GL_T2F_N3F_V3F, *((GLuint *)obj),
-			                                      obj + 4);
+		glInterleavedArrays(GL_T2F_N3F_V3F, 0, obj + 4);
 		glDrawArrays(GL_TRIANGLES, 0, *((GLuint *) obj));
 	}
 }
@@ -146,12 +147,61 @@ void drawObject(char *obj)
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	glBegin(GL_TRIANGLES);
+	/*glBegin(GL_TRIANGLES);
 	glTexCoord2f(.5, 0); glVertex3f(0.0, 1.0, 0.0);
 	glTexCoord2f(1, 1); glVertex3f(1.0, -1.0, 0.0);
 	glTexCoord2f(0, 1); glVertex3f(-1.0, -1.0, 0.0);
-	glEnd();
+	glEnd();*/
+	drawObject(obj);
 	SDL_GL_SwapBuffers();
+}
+
+void setVertex(float *vertex,
+	       float x, float y, float z,
+	       float nx, float ny, float nz,
+	       float tx, float ty)
+{
+	vertex[5] = x;
+	vertex[6] = y;
+	vertex[7] = z;
+	vertex[2] = nx;
+	vertex[3] = ny;
+	vertex[4] = nz;
+	vertex[0] = tx;
+	vertex[1] = ty;
+}
+
+char *createTriangle()
+{
+	char *obj = MALLOCN(char, 108);
+	int *iobj = (int *)obj;
+	float *fobj = (float *)obj;
+	FILE *file = fopen("testout", "w");
+
+	*iobj = 1;
+	iobj += 1;
+	*iobj = 1;
+	iobj += 1;
+	*iobj = 96;
+
+	fobj += 3;
+
+	setVertex(fobj, 0, 1, 0,
+		  0, 0, 1,
+		  .5, 0);
+	fobj += 8;
+	setVertex(fobj, 1, -1, 0,
+		  0, 0, 1,
+		  1, 1);
+	fobj += 8;
+	setVertex(fobj, -1, -1, 0,
+		  0, 0, 1,
+		  0, 1);
+
+	fwrite(obj, 1, 108, file);
+	fflush(file);
+	fclose(file);
+	return obj;
 }
 
 int main(int argc, char **argv)
@@ -166,6 +216,8 @@ int main(int argc, char **argv)
 	}
 
 	parseArguments(argc, argv);
+
+	obj = createTriangle();
 
 	while (!done) {
 		SDL_Delay(1000/30);

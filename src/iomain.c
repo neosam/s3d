@@ -26,12 +26,14 @@
 
 #include "io.h"
 #include "manager.h"
+#include "exception.h"
 
 int main(int argc, char **argv)
 {
 	char *res;
 	int size;
 
+	TRY;
 	if (strcmp(argv[1], "--serve") == 0) {
 		int port = atoi(argv[2]);
 		SDL_Init(SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE);
@@ -43,13 +45,14 @@ int main(int argc, char **argv)
 		quitManager();
 	}
 
-	if (!(res=getURL(argv[1], "file", &size))) {
-		fprintf(stderr, "%s\n", ioerr);
-		return 1;
-	}
+	res = getURL(argv[1], "file", &size);
 	fprintf(stderr, "%i\n", size);
 
 	fwrite(res, size, 1, stdout);
+
+	CATCH;
+	fprintf(stderr, "%s\n", excmsg);
+	TRYEND;
 
 	return 0;
 }

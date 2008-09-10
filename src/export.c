@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define EXCWARN
+
 #include "manager.h"
 #include "exception.h"
 

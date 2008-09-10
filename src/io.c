@@ -49,8 +49,7 @@ int splitProtokoll(char *url, char **protokoll, char **rest)
 		*protokoll = NULL;
 	}
 	else if ((*rest)[0] != (*rest)[1] || (*rest)[0] != '/') {
-		ioerr = "Not a valid domain";
-		return 1;
+		THROWS(-1, "Not a valid domain");
 	} else {
 		*rest += 2;
 	}
@@ -92,7 +91,7 @@ char *handleURL(char *protokoll, char *server, int port, char *rest, int *size)
 		p++;
 	}
 
-	ioerr = "Protokoll not found";
+	THROWS(-1, "Protokoll not found");
 	return NULL;
 }
 
@@ -117,17 +116,13 @@ char *handleFILE(char *server, int port, char *rest, int *size)
 	FILE *file;
 	char *res;
 
-	if (port != -1 || strcmp(server, "localhost")) {
-		ioerr = "A file can just read at localhost, do not specify a host or port";
-		return NULL;
-	}
+	THROWIF(port != -1 || strcmp(server, "localhost"), -1,
+		"A file can just read at localhost, do not specify a host "
+		"or port");
 
 	file = fopen(rest, "r");
 	res = MALLOCN(char, 4096);
-	if (file == NULL) {
-		ioerr = "cannot open file";
-		return NULL;
-	}
+	THROWIF(file == NULL, -1, "cannot open file");
 	*size = fread(res, 1, 4096, file);
 
 	return res;
@@ -205,7 +200,7 @@ int listenToCode(TCPsocket tcpclient, char *answer)
 	}
 }
 
-void _listenTCPClient(void *tcpclient)
+int _listenTCPClient(void *tcpclient)
 {
 	char *data = MALLOCN(char, 4096);
 	char *answer;
@@ -247,7 +242,7 @@ void _listenTCPClient(void *tcpclient)
 	}
 }
 
-void _listenTCP(void *tcpsock)
+int _listenTCP(void *tcpsock)
 {
 	TCPsocket sock;
 
@@ -264,16 +259,10 @@ int listenTCP(int port)
 {
 	IPaddress ip;
 	TCPsocket tcpsock;
-	if (SDLNet_ResolveHost(&ip, NULL, port) == -1) {
-		ioerr = "Could not resolve host";
-		return -1;
-	}
-       
+	THROWIF(SDLNet_ResolveHost(&ip, NULL, port) == -1, -1, 
+		"Could not resolve host");
 	tcpsock = SDLNet_TCP_Open(&ip);
-	if (!tcpsock) {
-		ioerr = "Could not open tcp listener";
-		return -1;
-	}
+	THROWIF(!tcpsock, -1, "Could not open tcp listener");
 
 	SDL_CreateThread(_listenTCP, (void *)tcpsock);
 }
