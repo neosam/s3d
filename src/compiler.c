@@ -22,7 +22,6 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
-#include <ossp/uuid.h>
 #include <assert.h>
 
 #include "compiler.h"
