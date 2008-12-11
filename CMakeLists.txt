@@ -63,6 +63,10 @@ add_executable(s3d_io
 	src/exception.c
 	src/iomain.c)
 
+add_executable(s3d_test
+	src/test.c
+	src/mesh.c)
+
 install(TARGETS s3d 
 		s3d_display
 		s3d_compiler 
