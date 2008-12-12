@@ -37,6 +37,7 @@ add_executable(s3d
 
 add_executable(s3d_display
 	src/display.c
+	src/mesh.c
 	src/msgqueue.c)
 
 add_executable(s3d_compiler

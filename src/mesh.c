@@ -33,6 +33,7 @@ struct face *face_new(struct vertex *v0, struct vertex *v1,
 	struct face *res = MALLOC(struct face);
 	int i;
 
+	res->v = MALLOCN(struct vertex *, 3);
 	res->v[0] = v0;
 	res->v[1] = v1;
 	res->v[2] = v2;
@@ -84,9 +85,9 @@ struct mesh *mesh_newTriangle()
 	struct mesh *res = mesh_new();
 	
 	mesh_addVertex(res, vertex_new(-1.0,  1.0, 0.0));
-	mesh_addVertex(res, vertex_new( 1.0,  1.0, 0.0));
 	mesh_addVertex(res, vertex_new(-1.0, -1.0, 0.0));
-	mesh_addFace(res, face_new(res->v[0], res->v[1], res->v[2]));
+	mesh_addVertex(res, vertex_new( 1.0,  1.0, 0.0));
+	mesh_addFace(res, face_new(res->v[0], res->v[1], res->v[2])); 
 
 	return res;
 }

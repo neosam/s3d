@@ -29,10 +29,12 @@
 #include <SDL_opengl.h>
 #include "msgqueue.h"
 #include "misc.h"
+#include "mesh.h"
 
 int done = 0;
 char *disperr;
 char *obj;
+double rotate = 0.0;
 
 #define checkImageWidth 64
 #define checkImageHeight 64
@@ -91,7 +93,7 @@ int updateDisplay(int width, int height)
 	gluPerspective(60.0, (GLdouble)width/(GLdouble)height, .1, 100.0);
 	glMatrixMode(GL_MODELVIEW);
 	glClearColor(.3, .3, 1.0, 0.0);
-	gluLookAt(0, 0, -2,
+	gluLookAt(0, 0, 2,
 		  0, 0, 0,
 		  0, 1, 0);
 
@@ -105,7 +107,7 @@ int initDisplay()
 		return -1;
 	}
 
-	if (updateDisplay(640, 480) != 0)
+	if (updateDisplay(320, 240) != 0)
 		return -1;
 
 
@@ -127,6 +129,7 @@ int initDisplay()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, checkImageWidth, 
 		     checkImageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
 		     checkImage);
+	glEnable(GL_CULL_FACE);
 
 	return 0;
 }
@@ -152,6 +155,12 @@ void display()
 	glTexCoord2f(1, 1); glVertex3f(1.0, -1.0, 0.0);
 	glTexCoord2f(0, 1); glVertex3f(-1.0, -1.0, 0.0);
 	glEnd();*/
+	glLoadIdentity();
+	rotate += 0.5;
+	gluLookAt(0.0, 0.0, 2.0,
+			0.0, 0.0, 0.0,
+			0.0, 1.0, 0.0);
+	glRotatef(rotate, 0.0, 1.0, 0.0);
 	drawObject(obj);
 	SDL_GL_SwapBuffers();
 }
@@ -169,6 +178,51 @@ void setVertex(float *vertex,
 	vertex[4] = nz;
 	vertex[0] = tx;
 	vertex[1] = ty;
+}
+
+/*
+ * | Parts | Texture | Size (faces*96) | Data | Texture | Size | Data |
+ * | Parts |           Part 1                 |        Part 2         |
+ */
+
+char *createDataFromMesh(struct mesh *mesh)
+{
+	char *obj = MALLOCN(char, mesh->faces * 96 + 12);
+	int *iobj = (int *)obj;
+	float *fobj = (float *)obj;
+	FILE *file = fopen("testout", "w");
+	int i;
+
+	*iobj = 1;
+	iobj += 1;
+	*iobj = 1;
+	iobj += 1;
+	*iobj = mesh->faces * 96;
+
+	fobj += 3;
+
+	for (i = 0; i < mesh->faces; i++) {
+		setVertex(fobj, mesh->f[i]->v[0]->x,
+				mesh->f[i]->v[0]->y,
+				mesh->f[i]->v[0]->z,
+				0, 0, 0,
+				0, 0);
+		fobj += 8;
+		setVertex(fobj, mesh->f[i]->v[1]->x,
+				mesh->f[i]->v[1]->y,
+				mesh->f[i]->v[1]->z,
+				0, 0, 0,
+				0, 0);
+		fobj += 8;
+		setVertex(fobj, mesh->f[i]->v[2]->x,
+				mesh->f[i]->v[2]->y,
+				mesh->f[i]->v[2]->z,
+				0, 0, 0,
+				0, 0);
+		fobj += 8;
+	}
+
+	return obj;
 }
 
 char *createTriangle()
@@ -207,6 +261,7 @@ char *createTriangle()
 int main(int argc, char **argv)
 {
 	SDL_Event event;
+	struct mesh *mesh = mesh_newTriangle();
 
 	signal(SIGTERM, quit);
 
@@ -217,7 +272,7 @@ int main(int argc, char **argv)
 
 	parseArguments(argc, argv);
 
-	obj = createTriangle();
+	obj = createDataFromMesh(mesh);
 
 	while (!done) {
 		SDL_Delay(1000/30);
