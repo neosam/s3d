@@ -118,7 +118,7 @@ void mesh_extrude(struct mesh *m, int face,
 		v1[i] = vertex_new(f->v[i]->x + offsetX,
 				f->v[i]->y + offsetY,
 				f->v[i]->z + offsetZ);
-		mesh_addVertex(m, v0[i]);
+		mesh_addVertex(m, v1[i]);
 
 		/* Save old position and move the face */
 		v0[i] = f->v[i];
@@ -128,5 +128,64 @@ void mesh_extrude(struct mesh *m, int face,
 	for (i = 0; i < 3; i++) {
 		mesh_connectEdges(m, v0[i], v0[(i+1)%3],
 				v1[i], v1[(i+1)%3]);
+	}
+}
+
+int mesh_getVertexFromPool(struct vertex **pool, int n, struct vertex *v)
+{
+	for (; n >= 0; --n) {
+		if (pool[n] == v)
+			return n;
+	}
+	return -1;
+}
+
+struct mesh_edge {
+	struct vertex *v0, *v1;
+	int noDraw;
+};
+
+void mesh_extruden(struct mesh *m, int *face, int n,
+		double offsetX, double offsetY, double offsetZ)
+{
+	struct face *f;
+	struct vertex **v0 = MALLOCN(struct vertex *, 3*n);
+	struct vertex **v1 = MALLOCN(struct vertex *, 3*n);
+	struct mesh_edge **ePool = MALLOCN(struct mesh_edge *, 3*n);
+	int i, j, index;
+	int pos = 0, ePos = 0;
+
+	for (j = 0; j < n; j++) {
+		f = m->f[face[j]];
+		for (i = 0; i < 3; i++) {
+			index = mesh_getVertexFromPool(v0, pos, f->v[i]);
+			v0[pos] = f->v[i];
+			if (index < 0) {
+				v1[pos] = vertex_new(f->v[i]->x + offsetX,
+					f->v[i]->y + offsetY,
+					f->v[i]->z + offsetZ);
+				mesh_addVertex(m, v1[pos]);
+				index = pos;
+
+				pos++;
+			}
+
+			/* Save old position and move the face */
+			f->v[i] = v1[index];
+		}
+		for (i = 0; i < 3; i++) {
+			ePool[ePos] = MALLOC(struct mesh_edge);
+			ePool[ePos]->v0 = f->v[i];
+			ePool[ePos]->v1 = f->v[(i+1)%3];
+			ePool[ePos]->noDraw = 0;
+			ePos++;
+		}
+	}
+
+	for (i = 0; i < ePos; i++) {
+		int index0 = mesh_getVertexFromPool(v1, pos, ePool[i]->v0), 
+		    index1 = mesh_getVertexFromPool(v1, pos, ePool[i]->v1);
+		mesh_connectEdges(m, v0[index0], v0[index1],
+				v1[index0], v1[index1]);
 	}
 }

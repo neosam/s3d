@@ -54,6 +54,8 @@ void mesh_appendVertex(struct mesh *m, struct vertex *v,
 		int index, int index2);
 void mesh_extrude(struct mesh *m, int face,
 		double offsetX, double offsetY, double offsetZ);
+void mesh_extruden(struct mesh *m, int *face, int n,
+		double offsetX, double offsetY, double offsetZ);
 
 #endif
 

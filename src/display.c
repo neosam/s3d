@@ -265,10 +265,10 @@ int main(int argc, char **argv)
 {
 	SDL_Event event;
 	struct mesh *mesh = mesh_newTriangle();
+	int faces[] = {0, 1};
 	mesh_appendVertex(mesh, vertex_new(1.0, -1.0, 0.0),
 			2, 1);
-	mesh_extrude(mesh, 0, 0, 0, 1);
-	mesh_extrude(mesh, 1, 0, 0, 1);
+	mesh_extruden(mesh, faces, 2, 0, 0, 1);
 
 	signal(SIGTERM, quit);
 
