@@ -269,6 +269,7 @@ int main(int argc, char **argv)
 	mesh_appendVertex(mesh, vertex_new(1.0, -1.0, 0.0),
 			2, 1);
 	mesh_extruden(mesh, faces, 2, 0, 0, 1);
+	mesh_extruden(mesh, faces, 2, 1, 1, 1);
 
 	signal(SIGTERM, quit);
 

@@ -140,10 +140,25 @@ int mesh_getVertexFromPool(struct vertex **pool, int n, struct vertex *v)
 	return -1;
 }
 
+
 struct mesh_edge {
 	struct vertex *v0, *v1;
 	int noDraw;
 };
+
+void mesh_banLastFromEPool(struct mesh_edge **ePool, int n)
+{
+	struct mesh_edge *e = ePool[n-1];
+	int i;
+
+	for (i = 0; i < n - 1; i++) {
+		if (ePool[i]->v0 == e->v0 && ePool[i]->v1 == e->v1 ||
+			ePool[i]->v0 == e->v1 && ePool[i]->v1 == e->v0) {
+			ePool[i]->noDraw = 1;
+			e->noDraw = 1;
+		}
+	}
+}
 
 void mesh_extruden(struct mesh *m, int *face, int n,
 		double offsetX, double offsetY, double offsetZ)
@@ -179,13 +194,15 @@ void mesh_extruden(struct mesh *m, int *face, int n,
 			ePool[ePos]->v1 = f->v[(i+1)%3];
 			ePool[ePos]->noDraw = 0;
 			ePos++;
+			mesh_banLastFromEPool(ePool, ePos);
 		}
 	}
 
 	for (i = 0; i < ePos; i++) {
 		int index0 = mesh_getVertexFromPool(v1, pos, ePool[i]->v0), 
 		    index1 = mesh_getVertexFromPool(v1, pos, ePool[i]->v1);
-		mesh_connectEdges(m, v0[index0], v0[index1],
-				v1[index0], v1[index1]);
+		if (!ePool[i]->noDraw)
+			mesh_connectEdges(m, v0[index0], v0[index1],
+					v1[index0], v1[index1]);
 	}
 }
