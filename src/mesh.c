@@ -8,6 +8,8 @@ struct vertex *vertex_new(double x, double y, double z)
 	res->x = x;
 	res->y = y;
 	res->z = z;
+	res->tx = x;
+	res->ty = y;
 	res->f = MALLOCN(struct face*, VERTEX_SIZE);
 	res->faces = 0;
 	res->max_faces = VERTEX_SIZE;

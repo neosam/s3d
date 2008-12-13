@@ -112,6 +112,7 @@ int initDisplay()
 
 
 	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_DEPTH_TEST);
 
 	/* All from the redbook gg */
 	makeCheckImage();
@@ -120,14 +121,14 @@ int initDisplay()
 	glGenTextures(1, &texName);
 	glBindTexture(GL_TEXTURE_2D, texName);
 	
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); */
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
-			GL_NEAREST);
+			GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
-			GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, checkImageWidth, 
-		     checkImageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
+			GL_LINEAR);
+	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, checkImageWidth, 
+		     checkImageHeight, GL_RGBA, GL_UNSIGNED_BYTE, 
 		     checkImage);
 	glEnable(GL_CULL_FACE);
 
@@ -149,7 +150,7 @@ void drawObject(char *obj)
 
 void display()
 {
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	/*glBegin(GL_TRIANGLES);
 	glTexCoord2f(.5, 0); glVertex3f(0.0, 1.0, 0.0);
 	glTexCoord2f(1, 1); glVertex3f(1.0, -1.0, 0.0);
@@ -206,19 +207,22 @@ char *createDataFromMesh(struct mesh *mesh)
 				mesh->f[i]->v[0]->y,
 				mesh->f[i]->v[0]->z,
 				0, 0, 0,
-				0, 0);
+				mesh->f[i]->v[0]->tx, 
+				mesh->f[i]->v[0]->ty);
 		fobj += 8;
 		setVertex(fobj, mesh->f[i]->v[1]->x,
 				mesh->f[i]->v[1]->y,
 				mesh->f[i]->v[1]->z,
 				0, 0, 0,
-				0, 0);
+				mesh->f[i]->v[1]->tx,
+				mesh->f[i]->v[1]->ty);
 		fobj += 8;
 		setVertex(fobj, mesh->f[i]->v[2]->x,
 				mesh->f[i]->v[2]->y,
 				mesh->f[i]->v[2]->z,
 				0, 0, 0,
-				0, 0);
+				mesh->f[i]->v[2]->tx,
+				mesh->f[i]->v[2]->ty);
 		fobj += 8;
 	}
 
@@ -266,10 +270,21 @@ int main(int argc, char **argv)
 	SDL_Event event;
 	struct mesh *mesh = mesh_newTriangle();
 	int faces[] = {0, 1};
+	int faces2[] = {2, 3};
+	int faces3[] = {4, 5};
+	int faces4[] = {6, 7};
+	int faces5[] = {8, 9};
 	mesh_appendVertex(mesh, vertex_new(1.0, -1.0, 0.0),
 			2, 1);
 	mesh_extruden(mesh, faces, 2, 0, 0, 1);
 	mesh_extruden(mesh, faces, 2, 1, 1, 1);
+	mesh_extruden(mesh, faces, 2, 0, 0, 1);
+	mesh_extruden(mesh, faces2, 2, -1, 0, 0);
+	mesh_extruden(mesh, faces3, 2, 0, 1, 0);
+	mesh_extruden(mesh, faces4, 2, 1, 0, 0);
+	mesh_extruden(mesh, faces5, 2, 0, -1, 0);
+	mesh_addFace(mesh, face_new(mesh->v[0], mesh->v[2], mesh->v[1]));
+	mesh_addFace(mesh, face_new(mesh->v[1], mesh->v[2], mesh->v[3]));
 
 	signal(SIGTERM, quit);
 

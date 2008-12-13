@@ -7,6 +7,7 @@
 
 struct vertex {
 	double x, y, z;
+	double tx, ty; /* Texture */
 	struct face **f;
 	unsigned int faces;
 	unsigned int max_faces;
