@@ -91,3 +91,42 @@ struct mesh *mesh_newTriangle()
 
 	return res;
 }
+
+void mesh_appendVertex(struct mesh *m, struct vertex *v,
+		int index, int index2)
+{
+	mesh_addVertex(m, v);
+	mesh_addFace(m, face_new(v, m->v[index], m->v[index2]));
+}
+
+void mesh_connectEdges(struct mesh *m, struct vertex *v0, struct vertex *v1,
+		struct vertex *v0copy, struct vertex *v1copy)
+{
+	mesh_addFace(m, face_new(v1, v1copy, v0));
+	mesh_addFace(m, face_new(v0, v1copy, v0copy));
+}
+
+void mesh_extrude(struct mesh *m, int face,
+		double offsetX, double offsetY, double offsetZ)
+{
+	struct face *f = m->f[face];
+	struct vertex **v0 = MALLOCN(struct vertex *, 3);
+	struct vertex **v1 = MALLOCN(struct vertex *, 3);
+	int i;
+	
+	for (i = 0; i < 3; i++) {
+		v1[i] = vertex_new(f->v[i]->x + offsetX,
+				f->v[i]->y + offsetY,
+				f->v[i]->z + offsetZ);
+		mesh_addVertex(m, v0[i]);
+
+		/* Save old position and move the face */
+		v0[i] = f->v[i];
+		f->v[i] = v1[i];
+	}
+
+	for (i = 0; i < 3; i++) {
+		mesh_connectEdges(m, v0[i], v0[(i+1)%3],
+				v1[i], v1[(i+1)%3]);
+	}
+}

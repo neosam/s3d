@@ -50,6 +50,10 @@ void mesh_addFace(struct mesh *m, struct face *f);
 void mesh_addVertex(struct mesh *m, struct vertex *v);
 
 struct mesh *mesh_newTriangle();
+void mesh_appendVertex(struct mesh *m, struct vertex *v,
+		int index, int index2);
+void mesh_extrude(struct mesh *m, int face,
+		double offsetX, double offsetY, double offsetZ);
 
 #endif
 

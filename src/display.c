@@ -157,7 +157,7 @@ void display()
 	glEnd();*/
 	glLoadIdentity();
 	rotate += 0.5;
-	gluLookAt(0.0, 0.0, 2.0,
+	gluLookAt(0.0, 3.0, 6.0,
 			0.0, 0.0, 0.0,
 			0.0, 1.0, 0.0);
 	glRotatef(rotate, 0.0, 1.0, 0.0);
@@ -181,7 +181,7 @@ void setVertex(float *vertex,
 }
 
 /*
- * | Parts | Texture | Size (faces*96) | Data | Texture | Size | Data |
+ * | Parts | Texture | Size (faces*3) | Data | Texture | Size | Data |
  * | Parts |           Part 1                 |        Part 2         |
  */
 
@@ -197,7 +197,7 @@ char *createDataFromMesh(struct mesh *mesh)
 	iobj += 1;
 	*iobj = 1;
 	iobj += 1;
-	*iobj = mesh->faces * 96;
+	*iobj = mesh->faces * 3;
 
 	fobj += 3;
 
@@ -222,6 +222,9 @@ char *createDataFromMesh(struct mesh *mesh)
 		fobj += 8;
 	}
 
+	fwrite(obj, 1, mesh->faces * 96 + 12, file);
+	fflush(file);
+	fclose(file);
 	return obj;
 }
 
@@ -262,6 +265,10 @@ int main(int argc, char **argv)
 {
 	SDL_Event event;
 	struct mesh *mesh = mesh_newTriangle();
+	mesh_appendVertex(mesh, vertex_new(1.0, -1.0, 0.0),
+			2, 1);
+	mesh_extrude(mesh, 0, 0, 0, 1);
+	mesh_extrude(mesh, 1, 0, 0, 1);
 
 	signal(SIGTERM, quit);
 
