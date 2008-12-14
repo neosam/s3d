@@ -34,6 +34,7 @@ int main(int argc, char **argv)
 	stream = compile(code);
 	fwrite(stream, getStreamsize(stream), 1, stdout);
 	fflush(stdout);
+	fprintf(stderr, "%i\n", getStreamsize(stream));
 
 	CATCH;
 	fprintf(stderr, "ERROR: %s\n", excmsg);

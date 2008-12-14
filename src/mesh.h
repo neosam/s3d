@@ -15,6 +15,7 @@ struct vertex {
 
 struct face {
 	struct vertex **v;
+	double x, y, z; /* Center */
 };
 
 struct mesh {
@@ -51,12 +52,20 @@ void mesh_addFace(struct mesh *m, struct face *f);
 void mesh_addVertex(struct mesh *m, struct vertex *v);
 
 struct mesh *mesh_newTriangle();
+struct mesh *mesh_newCube();
 void mesh_appendVertex(struct mesh *m, struct vertex *v,
 		int index, int index2);
 void mesh_extrude(struct mesh *m, int face,
 		double offsetX, double offsetY, double offsetZ);
 void mesh_extruden(struct mesh *m, int *face, int n,
 		double offsetX, double offsetY, double offsetZ);
+
+void mesh_translateFaces(struct mesh *m, int *face, int n,
+		double x, double y, double z);
+void mesh_scaleFaces(struct mesh *m, int *face, int n,
+		double x, double y, double z);
+void mesh_rotateFaces(struct mesh *m, int *face, int n,
+		double a, double x, double y, double z);
 
 #endif
 

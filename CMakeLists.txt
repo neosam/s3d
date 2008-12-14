@@ -36,7 +36,10 @@ add_executable(s3d
 	src/msgqueue.c)
 
 add_executable(s3d_display
+	src/compiler.c
 	src/display.c
+	src/exception.c
+	src/manager.c
 	src/mesh.c
 	src/msgqueue.c)
 

@@ -30,6 +30,7 @@
 #include "msgqueue.h"
 #include "misc.h"
 #include "mesh.h"
+#include "manager.h"
 
 int done = 0;
 char *disperr;
@@ -42,6 +43,8 @@ double rotate = 0.0;
 static GLubyte checkImage[checkImageHeight][checkImageWidth][4];
 
 static GLuint texName;
+
+char *createDataFromMesh(struct mesh *m);
 
 void makeCheckImage(void)
 {
@@ -58,7 +61,39 @@ void makeCheckImage(void)
    }
 }
 
+char *parseStream(char *stream)
+{
+	int *istream = (int*) stream;
+	struct mesh *m;
+	int max = *((int*) stream);
+	int pos = 4;
 
+	istream++;
+
+	while (pos < max) {
+		fprintf(stderr, "Current istream: %i\n", *istream);
+		switch (*istream) {
+		case 2:
+			m = mesh_newCube();
+			istream++;
+			pos += 4;
+			break;
+		case 0x10:
+			istream++;
+			mesh_extrude(m, *istream, *((float*)(istream+1)),
+					*((float*)(istream+2)), 
+					*((float*)(istream+3)));
+			istream += 4;
+			pos += 20;
+			break;
+		default:
+			fprintf(stderr, "Error in stream: %i\n", *istream);
+			return "";
+		}
+	}
+
+	return createDataFromMesh(m);
+}
 
 void quit(int signal)
 {
@@ -70,9 +105,13 @@ void parseArguments(int argc, char **argv)
 {
 	int i;
 	for (i = 1; i < argc; i++) {
-		if (strcmp(argv[i], "-m")) {
+		if (strcmp(argv[i], "-m") == 0) {
 			s3d_connectMessageQueue(strtol(argv[i+1], NULL, 16));
 			i++;
+		}
+		if (strcmp(argv[i], "-d") == 0) {
+			obj = parseStream(getCurrent(argv[i+1]));
+			i+=2;
 		}
 	}
 }
@@ -268,8 +307,10 @@ char *createTriangle()
 int main(int argc, char **argv)
 {
 	SDL_Event event;
-	struct mesh *mesh = mesh_newTriangle();
+/*	struct mesh *mesh = mesh_newCube();
 	int faces[] = {0, 1};
+	mesh_rotateFaces(mesh, faces, 2, 3.1415/4, 1, 0, 0);
+
 	int faces2[] = {2, 3};
 	int faces3[] = {4, 5};
 	int faces4[] = {6, 7};
@@ -284,9 +325,11 @@ int main(int argc, char **argv)
 	mesh_extruden(mesh, faces4, 2, 1, 0, 0);
 	mesh_extruden(mesh, faces5, 2, 0, -1, 0);
 	mesh_addFace(mesh, face_new(mesh->v[0], mesh->v[2], mesh->v[1]));
-	mesh_addFace(mesh, face_new(mesh->v[1], mesh->v[2], mesh->v[3]));
+	mesh_addFace(mesh, face_new(mesh->v[1], mesh->v[2], mesh->v[3]));*/
 
 	signal(SIGTERM, quit);
+
+	initManager();
 
 	if (initDisplay() != 0) {
 		fprintf(stderr, "%s\n", disperr);
@@ -295,7 +338,7 @@ int main(int argc, char **argv)
 
 	parseArguments(argc, argv);
 
-	obj = createDataFromMesh(mesh);
+//	obj = createDataFromMesh(mesh);
 
 	while (!done) {
 		SDL_Delay(1000/30);

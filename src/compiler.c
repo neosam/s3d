@@ -33,8 +33,10 @@ void *compilererr;
 
 char *skipSpaces(char *pc)
 {
-	while(*pc == ' ' || *pc == '\n' || *pc == '\t' || *pc == '\r')
-		THROWIF(*pc++ == '\0', -1, "EOF or \\0 in file");
+	while((*pc == ' ' || *pc == '\n' || *pc == '\t' || *pc == '\r') &&
+			*pc != '\0')
+		pc++;
+//		THROWIF(*pc++ == '\0', -1, "EOF or \\0 in file");
 	return pc;
 }
 
@@ -94,7 +96,7 @@ char *scanParameterlist(char ***parameter, char *pc)
 		pc = skipSpaces(pc);
 		if (*pc == ')')
 			return ++pc;
-		scanParameter(param, pc);
+		pc = scanParameter(param, pc);
 		param += 2;
 	}
 }
@@ -152,13 +154,52 @@ int writeTriToStream(char *stream, char *tagname, char **parameter)
 	free(d1);
 	free(d2);
 
+
 	return 40;
+}
+
+int writeCubeToStream(char *stream, char *tagname, char **parameter)
+{
+	const type = 2;
+	memcpy(stream, &type, 4);
+	return 4;
+}
+
+int writeExtrudeToStream(char *stream, char *tagname, char **parameter)
+{
+	char *face = lookupList(parameter, "face");
+	char *offset = lookupList(parameter, "offset");
+	const type = 0x10;
+
+	int iface;
+	float *foffset;
+
+	THROWIF(face == NULL || offset == NULL, -1,
+			"Not all parameter defined");
+
+	iface = atoi(face);
+	foffset = parseV3f(offset);
+
+	memcpy(stream, &type, 4);
+	memcpy(stream + 4, &iface, 4);
+       	memcpy(stream + 8, foffset, 12);
+
+	free(foffset);
+
+	return 20;
 }
 
 int writeTag(char *stream, char *tagname, char **parameter)
 {
+	/* Raw Mesh */
 	if (strcmp(tagname, "tri") == 0)
 		return writeTriToStream(stream, tagname, parameter);
+	if (strcmp(tagname, "cube") == 0)
+		return writeCubeToStream(stream, tagname, parameter);
+
+	/* Mesh manipulation */
+	if (strcmp(tagname, "extrude") == 0)
+		return writeExtrudeToStream(stream, tagname, parameter);
 	THROWS(-1, "Tagname not found");
 }
 
@@ -168,12 +209,17 @@ int writeData(char *stream, char *code)
 	char *pc = code;
 	char *tagname;
 	char **parameter;
-	int size;
+	int size = 0;
 
-	pc = scanTag(pc, &tagname, &parameter);
-	pc = skipSpaces(pc);
-	THROWIF(*pc != ')', -1, "Expected ) at end of file");
-	size = writeTag(stream + 4, tagname, parameter);
+	do {
+		pc = scanTag(pc, &tagname, &parameter);
+		pc = skipSpaces(pc);
+		THROWIF(*pc != ')', -1,
+				"Expected )");
+		size += writeTag(stream + size + 4, tagname, parameter);
+		pc++;
+		pc = skipSpaces(pc);
+	} while (*pc != '\0');
 
 	size += 4;
 	memcpy(stream, &size, 4);

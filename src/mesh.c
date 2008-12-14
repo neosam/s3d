@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "mesh.h"
 #include "misc.h"
 
@@ -39,6 +41,9 @@ struct face *face_new(struct vertex *v0, struct vertex *v1,
 	res->v[0] = v0;
 	res->v[1] = v1;
 	res->v[2] = v2;
+	res->x = (v0->x + v1->x + v2->x) / 3.0;
+	res->y = (v0->y + v1->y + v2->y) / 3.0;
+	res->z = (v0->z + v1->z + v2->z) / 3.0;
 
 	for (i = 0; i < 3; i++)
 		vertex_addFace(res->v[i], res);
@@ -89,7 +94,22 @@ struct mesh *mesh_newTriangle()
 	mesh_addVertex(res, vertex_new(-1.0,  1.0, 0.0));
 	mesh_addVertex(res, vertex_new(-1.0, -1.0, 0.0));
 	mesh_addVertex(res, vertex_new( 1.0,  1.0, 0.0));
-	mesh_addFace(res, face_new(res->v[0], res->v[1], res->v[2])); 
+	mesh_addFace(res, face_new(res->v[0], res->v[1], res->v[2]));
+
+	return res;
+}
+
+struct mesh *mesh_newCube()
+{
+	struct mesh *res = mesh_newTriangle();
+	int faces[] = {0, 1};
+	int allFaces[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+
+	mesh_appendVertex(res, vertex_new(1.0, -1.0, 0.0), 2, 1);
+	mesh_addFace(res, face_new(res->v[0], res->v[2], res->v[1]));
+	mesh_addFace(res, face_new(res->v[1], res->v[2], res->v[3]));
+	mesh_extruden(res, faces, 2, 0, 0, 2);
+	mesh_translateFaces(res, allFaces, 12, 0, 0, -1);
 
 	return res;
 }
@@ -206,5 +226,125 @@ void mesh_extruden(struct mesh *m, int *face, int n,
 		if (!ePool[i]->noDraw)
 			mesh_connectEdges(m, v0[index0], v0[index1],
 					v1[index0], v1[index1]);
+	}
+}
+
+void mesh_translateFaces(struct mesh *m, int *face, int n,
+		double x, double y, double z)
+{
+	struct vertex **v = MALLOCN(struct vertex *, n * 3);
+	int i, j;
+	int vPos = 0,
+	    index;
+
+	/* Get all vertices */
+	for (i = 0; i < n; i++) {
+		struct face *f = m->f[i];
+		for (j = 0; j < 3; j++) {
+			index = mesh_getVertexFromPool(v, vPos, f->v[j]);
+			if (index < 0) {
+				v[vPos] = f->v[j];
+				vPos++;
+			}
+		}
+	}
+
+	/* Translate */
+	for (i = 0; i < vPos; i++) {
+		v[i]->x += x;
+		v[i]->y += y;
+		v[i]->z += z;
+	}
+	for (i = 0; i < n; i++) {
+		m->f[i]->x += x;
+		m->f[i]->y += y;
+		m->f[i]->z += z;
+	}
+}
+
+void mesh_scaleFaces(struct mesh *m, int *face, int n,
+		double x, double y, double z)
+{
+	double cx = 0.0, cy = 0.0, cz = 0.0; /* Center */
+	int i, j;
+	struct vertex **v = MALLOCN(struct vertex *, n * 3);
+	int vPos = 0, 
+	    index;
+
+	/* Calculate center point for all faces */
+	for (i = 0; i < n; i++) {
+		cx += m->f[i]->x;
+		cy += m->f[i]->y;
+		cz += m->f[i]->z;
+	}
+	cx /= n;
+	cy /= n;
+	cz /= n;
+
+	/* Get all vertices */
+	for (i = 0; i < n; i++) {
+		struct face *f = m->f[i];
+		for (j = 0; j < 3; j++) {
+			index = mesh_getVertexFromPool(v, vPos, f->v[j]);
+			if (index < 0) {
+				v[vPos] = f->v[j];
+				vPos++;
+			}
+		}
+	}
+
+	/* Scale all vertices */
+	for (i = 0; i < vPos; i++) {
+		v[i]->x = cx + (v[i]->x - cx) * x;
+		v[i]->y = cy + (v[i]->y - cy) * y;
+		v[i]->z = cz + (v[i]->z - cz) * z;
+	}
+}
+
+void mesh_rotateFaces(struct mesh *m, int *face, int n,
+		double a, double x, double y, double z)
+{
+	double cx = 0, cy = 0, cz = 0; /* Center */
+	struct vertex **v = MALLOCN(struct vertex *, n * 3);
+	int vPos = 0,
+	    index;
+	int i, j;
+
+	/* Calculate center point for all faces */
+	for (i = 0; i < n; i++) {
+		cx += m->f[i]->x;
+		cy += m->f[i]->y;
+		cz += m->f[i]->z;
+	}
+	cx /= n;
+	cy /= n;
+	cz /= n;
+
+	/* Get all vertices */
+	for (i = 0; i < n; i++) {
+		struct face *f = m->f[i];
+		for (j = 0; j < 3; j++) {
+			index = mesh_getVertexFromPool(v, vPos, f->v[j]);
+			if (index < 0) {
+				v[vPos] = f->v[j];
+				vPos++;
+			}
+		}
+	}
+
+	/* Rotate all vertices */
+	for (i = 0; i < vPos; i++) {
+		double nx = v[i]->x - cx,
+		       ny = v[i]->y - cy,
+		       nz = v[i]->z - cz;
+		v[i]->x = cx + nx*(x*x + cos(a)*(1 - x*x)) +
+				ny*(x*y - cos(a)*x*y + sin(a) * z) +
+				nz*(x*z - cos(a)*x*z + sin(a) * (-y));
+		v[i]->y = cy + nx*(x*y - cos(a)*x*y + sin(a) * (-z)) +
+				ny*(y*y + cos(a)*(1 - y*y)) +
+				nz*(y*z - cos(a)*y*z + sin(a) * x);
+		v[i]->z = cz + nx*(x*z - cos(a)*x*z + sin(a) * y) +
+				ny*(y*z - cos(a)*y*z + sin(a) * (-x)) +
+				nz*(z*z + cos(a)*(1-z*z));
 	}
 }
