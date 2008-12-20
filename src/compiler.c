@@ -130,6 +130,23 @@ float *parseV3f(char *parameter)
 	return res;
 }
 
+int *parseIntList(char *parameter, int *size)
+{
+	char *p = parameter + 1;
+	int *list = MALLOCN(int, 256);
+	int pos = 0;
+	
+	while (*p != ')' && *p != '\0') {
+		list[pos] = atoi(p);
+		pos++;
+		while (*p != ' ' && *p != '\n' && *p != '\t' && *p != '\0') p++;
+		p = skipSpaces(p);
+	}
+
+	*size = pos;
+	return list;
+}
+
 int writeTriToStream(char *stream, char *tagname, char **parameter)
 {
 	char *v0 = lookupList(parameter, "v0"),
@@ -189,6 +206,33 @@ int writeExtrudeToStream(char *stream, char *tagname, char **parameter)
 	return 20;
 }
 
+int writeExtrudenToStream(char *stream, char *tagname, char **parameter)
+{
+	char *face = lookupList(parameter, "face");
+	char *offset = lookupList(parameter, "offset");
+	const type = 0x11;
+	int size;
+
+	int *iface;
+	float *foffset;
+
+	THROWIF(face == NULL || offset == NULL, -1,
+			"Not all parameter defined");
+
+	iface = parseIntList(face, &size);
+	foffset = parseV3f(offset);
+
+	memcpy(stream, &type, 4);
+	memcpy(stream + 4, &size, 4);
+	memcpy(stream + 8, iface, size * 4);
+	memcpy(stream + size * 4 + 8, foffset, 12);
+
+	free(iface);
+	free(foffset);
+
+	return 20 + size * 4;
+}
+
 int writeTag(char *stream, char *tagname, char **parameter)
 {
 	/* Raw Mesh */
@@ -200,6 +244,8 @@ int writeTag(char *stream, char *tagname, char **parameter)
 	/* Mesh manipulation */
 	if (strcmp(tagname, "extrude") == 0)
 		return writeExtrudeToStream(stream, tagname, parameter);
+	if (strcmp(tagname, "extruden") == 0)
+		return writeExtrudenToStream(stream, tagname, parameter);
 	THROWS(-1, "Tagname not found");
 }
 

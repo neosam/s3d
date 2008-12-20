@@ -36,6 +36,7 @@ int done = 0;
 char *disperr;
 char *obj;
 double rotate = 0.0;
+char *objectName;
 
 #define checkImageWidth 64
 #define checkImageHeight 64
@@ -86,6 +87,15 @@ char *parseStream(char *stream)
 			istream += 4;
 			pos += 20;
 			break;
+		case 0x11:
+			istream++;
+			mesh_extruden(m, istream + 1, *istream,
+					*((float*)(istream+*istream + 1)),
+					*((float*)(istream+*istream + 2)),
+					*((float*)(istream+*istream + 3)));
+			pos += 20 * (*istream * 4);
+			istream += 4 + *istream;
+			break;
 		default:
 			fprintf(stderr, "Error in stream: %i\n", *istream);
 			return "";
@@ -110,6 +120,7 @@ void parseArguments(int argc, char **argv)
 			i++;
 		}
 		if (strcmp(argv[i], "-d") == 0) {
+			objectName = argv[i+1];
 			obj = parseStream(getCurrent(argv[i+1]));
 			i+=2;
 		}
@@ -338,6 +349,8 @@ int main(int argc, char **argv)
 
 	parseArguments(argc, argv);
 
+	quitManager();
+
 //	obj = createDataFromMesh(mesh);
 
 	while (!done) {
@@ -350,6 +363,17 @@ int main(int argc, char **argv)
 			case SDL_VIDEORESIZE:
 				updateDisplay(event.resize.w, event.resize.h);
 				break;
+			case SDL_KEYDOWN:
+				switch (event.key.keysym.sym) {
+				case SDLK_ESCAPE:
+					done = 1;
+					break;
+				case SDLK_SPACE:
+					initManager();
+					obj = parseStream(getCurrent(objectName));
+					quitManager();
+					break;
+				}
 			}
 		}
 		display();
