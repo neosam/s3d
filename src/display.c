@@ -66,7 +66,7 @@ char *parseStream(char *stream)
 {
 	int *istream = (int*) stream;
 	struct mesh *m;
-	int max = *((int*) stream);
+	int max = *istream;
 	int pos = 4;
 
 	istream++;
@@ -89,17 +89,19 @@ char *parseStream(char *stream)
 			break;
 		case 0x11:
 			istream++;
+			fprintf(stderr, "%i\n", *istream);
 			mesh_extruden(m, istream + 1, *istream,
 					*((float*)(istream+*istream + 1)),
 					*((float*)(istream+*istream + 2)),
 					*((float*)(istream+*istream + 3)));
-			pos += 20 * (*istream * 4);
+			pos += 20 + (*istream) * 4;
 			istream += 4 + *istream;
 			break;
 		default:
 			fprintf(stderr, "Error in stream: %i\n", *istream);
 			return "";
 		}
+		fprintf(stderr, "Pos: %i/%i\n", pos, max);
 	}
 
 	return createDataFromMesh(m);
@@ -340,7 +342,7 @@ int main(int argc, char **argv)
 
 	signal(SIGTERM, quit);
 
-	initManager();
+	initManagerRO();
 
 	if (initDisplay() != 0) {
 		fprintf(stderr, "%s\n", disperr);
@@ -369,7 +371,7 @@ int main(int argc, char **argv)
 					done = 1;
 					break;
 				case SDLK_SPACE:
-					initManager();
+					initManagerRO();
 					obj = parseStream(getCurrent(objectName));
 					quitManager();
 					break;

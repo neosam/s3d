@@ -19,7 +19,7 @@ include_directories(${CMAKE_BINARY_DIR}
 # Bind libraries for the linker
 link_libraries(${SDL_LIBRARY}
 #	       ${SDLIMAGE_LIBRARY}
-	       ${OPENGL_LIBRARIES} -lsqlite3 -lSDL_net)
+	       ${OPENGL_LIBRARIES} -lsqlite3 -lSDL_net -lcurl)
 #	       ${OPENAL_LIBRARY}
 #	       ${GLU_LIBRARY}
 #	       -lalut)

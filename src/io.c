@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <curl/curl.h>
+
 #include <SDL.h>
 #include <SDL_net.h>
 
@@ -33,10 +35,13 @@
 
 char *ioerr;
 int tcplistening = 0;
+char *curlBuffer;
+int curlBufferSize;
 
 struct handleURLItem handleURLList[] = {{"file", handleFILE},
 					{"s3ds", handleS3DS},
 					{"s3d", handleS3D},
+					{"http", handleHTTP},
 					{NULL, NULL}};
 
 int splitProtokoll(char *url, char **protokoll, char **rest)
@@ -93,6 +98,44 @@ char *handleURL(char *protokoll, char *server, int port, char *rest, int *size)
 
 	THROWS(-1, "Protokoll not found");
 	return NULL;
+}
+
+int curlGet(void *data, size_t size, size_t size_nmemt, void *userp)
+{
+	int curlBufferOldSize = curlBufferSize;
+	if (curlBufferSize == 0) {
+		curlBufferSize = size_nmemt;
+		curlBuffer = malloc(sizeof(char) * size_nmemt);
+	}
+	else {
+		curlBufferSize += size_nmemt;
+		curlBuffer = (char*) realloc(curlBuffer, 
+				sizeof(sizeof(char) * curlBufferSize)); 
+	}
+
+	sprintf(curlBuffer + curlBufferOldSize, "%s", data);
+
+	return size_nmemt;
+}
+
+char *handleHTTP(char *server, int port, char *rest, int *size)
+{
+	char *res;
+	char *url = (char*) malloc(sizeof(char) * 256);
+	char errorCode[256];
+	CURL *handle = curl_easy_init();
+
+	sprintf(url, "http://%s/%s", server, rest);
+
+	curl_easy_setopt(handle, CURLOPT_URL, url);
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, curlGet);
+	curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, errorCode);
+
+	if (curl_easy_perform(handle) != 0)
+		fprintf(stderr, "Error: %s %s\n", url, errorCode);
+
+	*size = curlBufferSize;
+	return curlBuffer;
 }
 
 char *handleS3DS(char *server, int port, char *rest, int *size)

@@ -1,5 +1,7 @@
 
 (cube ())
 (extruden (face="(0 1)" offset="(0 1 1)"))
-(extruden (face="(8 9)" offset="(0 1 0)"))
+(extruden (face="(0 1)" offset="(0 0 1)"))
+(extruden (face="(6 7)" offset="(0 1 0)"))
+(extruden (face="(10 11)" offset="(0 -1 0)"))
 
